@@ -4,12 +4,12 @@ def main():
     conn = sqlite3.connect('students3.db')  # a db is created
     c = conn.cursor()
     # cursor can execute sql queries
-    createTable(c)
+    # createTable(c)
     # c.execute('insert into students (first, middle, last, house, birth) values (?,?,?,?,?)',
     #           ('yousha', 'arshad', 'shamsi', 'iqbal', '1996'))
 
-    c.execute('update students set first=? where id=?', ('yous', '1'))
-    conn.commit()
+    # c.execute('update students set first=? where id=?', ('yous', '1'))
+    # conn.commit()
 
     choice = int(input('Press 1 to create a new entry:\n'
                        'Press 2 to display all existing students:\n'
@@ -23,7 +23,7 @@ def main():
     elif choice == 3:
         deleteEntry(c)
     elif choice == 4:
-        updateEntry(c)
+        updateEntry(conn, c)
     conn.commit()
     pass
 
@@ -60,10 +60,10 @@ def displayEntries(c):
 
 def deleteEntry(c):
     displayEntries(c)
-    id = int(input('Enter the id to delete'))
+    id = int(input('Enter the id to delete:\n'))
     c.execute('delete from students where id = ?', (id,))
 
-def updateEntry(c):
+def updateEntry(conn, c):
     def get_choice():
         choice = input('Press 1 to update first name\n'
                        'Press 2 to update middle name\n'
@@ -94,7 +94,7 @@ def updateEntry(c):
         c.execute('update students set birth=? where id=?', (x, id))
 
     displayEntries(c)
-    id = int(input('Enter the id to update'))
+    id = int(input('Enter the id to update: \n'))
     ch = get_choice()
     while ch != 'q':
         if ch == '1':
@@ -109,6 +109,9 @@ def updateEntry(c):
         elif ch == '5':
             birth(id)
         ch = get_choice()
+    print('Updated Table:')
+    displayEntries(c)
+
 
 if __name__ == '__main__':
     main()
