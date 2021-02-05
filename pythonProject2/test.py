@@ -23,7 +23,7 @@ def main():
     elif choice == 3:
         deleteEntry(c)
     elif choice == 4:
-        updateEntry(conn, c)
+        updateEntry(c)
     conn.commit()
     pass
 
@@ -63,7 +63,7 @@ def deleteEntry(c):
     id = int(input('Enter the id to delete:\n'))
     c.execute('delete from students where id = ?', (id,))
 
-def updateEntry(conn, c):
+def updateEntry(c):
     def get_choice():
         choice = input('Press 1 to update first name\n'
                        'Press 2 to update middle name\n'
