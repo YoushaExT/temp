@@ -38,6 +38,9 @@ def create_table_person(c):
 
 def create_base_admin(conn, c):
     uid = input('Set login id of the base admin:\n')
+    while list(c.execute('select * from person where id = ?', (uid,))):
+        print(f'User ID:{uid} already exists, provide a unique ID!')
+        uid = input('Set login id of the base admin:\n')
     pwd = input('Set password of the base admin:\n')
     name = input('Set name:\n')
     position = input('Set position:\n')
@@ -77,7 +80,6 @@ def main():
         print('No base admin detected!\n Create a new base admin:')
         create_base_admin(conn, c)
     # create_table_person(c)
-
     # conn.commit  # note: commit not working for actions performed in other functions
     a = c.execute('select * from person')
     for e in a:
