@@ -14,7 +14,8 @@ def main():
     choice = int(input('Press 1 to create a new entry:\n'
                        'Press 2 to display all existing students:\n'
                        'Press 3 to delete an existing entry:\n'
-                       'Press 4 to update an existing entry:\n'))
+                       'Press 4 to update an existing entry:\n'
+                       'Press 5 to display by id\n'))
 
     if choice == 1:
         newEntry(c)
@@ -24,6 +25,8 @@ def main():
         deleteEntry(c)
     elif choice == 4:
         updateEntry(c)
+    elif choice == 5:
+        display_by_id(c)
     conn.commit()
     pass
 
@@ -112,6 +115,18 @@ def updateEntry(c):
     print('Updated Table:')
     displayEntries(c)
 
+
+def display_by_id(c):
+    uid = int(input('Enter id:\n'))
+    # print(uid, type(uid))
+    entry = c.execute('select first from students where id = ?', (uid,))
+    # if list(entry):
+    #     print('Exists')
+    # else:
+    #     print('None')
+    # print(list(entry), entry, type(entry))
+    for e in entry:
+        print(e, type(e), e[0])
 
 if __name__ == '__main__':
     main()
