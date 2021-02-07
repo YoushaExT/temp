@@ -3,6 +3,7 @@ import datetime
 
 Admins = {}
 Employees = {}
+TODAY = datetime.datetime.now().date()
 
 
 class Person:
@@ -30,20 +31,51 @@ class Person:
         print_user_info(c, uid)
         conn.commit()
 
+    def mark_present(self, conn, c, date):
+        uid = self.person_id
+        insert_date(date, conn, c)
+        a = c.execute('select dateID from dates where date = ?', (date,))
+        did = list(a)[0][0]  # dateID
+        print(did, date)
+        c.execute('insert into presents (dateID, personID) values (?, ?)', (did, uid))
+        conn.commit()
+
+    def mark_leave(self, conn, c, date):
+        uid = self.person_id
+        insert_date(date, conn, c)
+        a = c.execute('select dateID from dates where date = ?', (date,))
+        did = list(a)[0][0]  # dateID
+        print(did, date)
+        c.execute('insert into leaves (dateID, personID) values (?, ?)', (did, uid))
+        conn.commit()
 
 class Admin(Person):
     def __init__(self, person_id, name, position, pwd):
         super().__init__(person_id, name, position, pwd)
 
     def menu(self, conn, c):
+        a = c.execute('select dateID from dates where date = ?', (TODAY,))
+        did = list(a)[0][0]  # dateID
+        s_p, s_l, marked = '', '', True
+
+        b = c.execute('select * from presents where dateID=? and personID=?', (did, self.person_id))
+        bcopy = list(b)
+        d = c.execute('select * from leaves where dateID=? and personID=?', (did, self.person_id))
+        dcopy = list(d)
+        # print(bcopy, dcopy, self.person_id, did, type(did))
+        if not bcopy and not dcopy:
+            # not already marked
+            marked = False
+            s_p = 'Press p to mark present for today\n'
+            s_l = 'Press l to mark leave for today\n'
         print('ADMIN MENU:')
+        print(TODAY, TODAY.strftime('%A'))
         choice = input('Press 1 to add a new Employee\n'
                        'Press 2 to add a new Admin\n'
                        'Press 3 to change an Employee\'s profile\n'
-                       'Press 4 to mark your attendance\n'
-                       'Press 5 to view all attendance records\n'
-                       'Press 6 to delete a member\n'
-                       'Press q to quit\n')
+                       'Press 4 to view all attendance records\n'
+                       'Press 5 to delete a member\n'
+                       f'{s_p}{s_l}Press q to quit\n')
         if choice == '1':
             self.add_member(conn, c, 0)
         elif choice == '2':
@@ -53,9 +85,11 @@ class Admin(Person):
         elif choice == '4':
             pass
         elif choice == '5':
-            pass
-        elif choice == '6':
             self.delete_ppl(conn, c)
+        elif choice == 'p' and not marked:
+            self.mark_present(conn, c, TODAY)
+        elif choice == 'l' and not marked:
+            self.mark_leave(conn, c, TODAY)
         elif choice == 'q':
             return False
         return True  # True to keep asking, False to exit
@@ -217,7 +251,7 @@ def main():
     create_date_table(conn, c)
     create_presents_table(conn, c)
     create_leaves_table(conn, c)
-    
+
     print('For testing: Person Table')
     show_table(c)
     if not list(c.execute('select * from person')):
@@ -240,6 +274,7 @@ def main():
     if isinstance(current_user, Employee):
         print('Employee Menu:')
 
+
 def create_date_table(conn, c):
     try:
         c.execute('create table dates'
@@ -248,6 +283,7 @@ def create_date_table(conn, c):
         conn.commit()
     except sqlite3.Error:
         pass
+
 
 def insert_date(date, conn, c):
 
