@@ -157,6 +157,9 @@ class Admin(Person):
         # conn.commit()
         show_table(c)
 
+    def view_attendance_all(self, conn, c):
+        # todo
+        pass
 
 class Employee(Person):
     def __init__(self, person_id, name, position, pwd):
@@ -223,7 +226,6 @@ def print_user_info(c, uid):
 
 
 def load(c):
-
     table = c.execute('select * from person')
     for entry in table:
         if entry[4] == 1:
@@ -235,18 +237,53 @@ def load(c):
     print(Admins)
     print(Employees)
 
+
+def create_date_table(conn, c):
+    try:
+        c.execute('create table dates'
+                  '(dateID INTEGER PRIMARY KEY AUTOINCREMENT,'
+                  'date DATE);')
+        conn.commit()
+    except sqlite3.Error:
+        pass
+
+
+def insert_date(date, conn, c):
+
+    a = c.execute('select date from dates where date = ?', (date,))
+    # print(list(a))
+    if not list(a):
+        # print('Doesnt already exist')
+        c.execute('insert into dates (date) values (?)', (date,))
+        conn.commit()
+
+
+def create_presents_table(conn, c):
+    try:
+        c.execute('create table presents'
+                  '(id INTEGER PRIMARY KEY AUTOINCREMENT,'
+                  'dateID INTEGER,'
+                  'personID VARCHAR(255))')
+        conn.commit()
+    except sqlite3.Error as e:
+        pass
+
+
+def create_leaves_table(conn, c):
+    try:
+        c.execute('create table leaves'
+                  '(id INTEGER PRIMARY KEY AUTOINCREMENT,'
+                  'dateID INTEGER,'
+                  'personID VARCHAR(255))')
+        conn.commit()
+    except sqlite3.Error as e:
+        pass
+
+
 def main():
     conn = sqlite3.connect('attend2.db')
     c = conn.cursor()
     create_table_person(conn, c)
-
-    # today = datetime.datetime.now().date()
-    # print(today, type(today))
-    # x = datetime.date(2021, 2, 8)
-    # x += datetime.timedelta(days=1)
-    # print(x, type(x))
-    # insert_date(today)
-    # insert_date(x)
 
     create_date_table(conn, c)
     create_presents_table(conn, c)
@@ -275,47 +312,33 @@ def main():
         print('Employee Menu:')
 
 
-def create_date_table(conn, c):
-    try:
-        c.execute('create table dates'
-                  '(dateID INTEGER PRIMARY KEY AUTOINCREMENT,'
-                  'date DATE);')
-        conn.commit()
-    except sqlite3.Error:
-        pass
-
-
-def insert_date(date, conn, c):
-
-    a = c.execute('select date from dates where date = ?', (date,))
-    # print(list(a))
-    if not list(a):
-        print('Doesnt already exist')
-        c.execute('insert into dates (date) values (?)', (date,))
-        conn.commit()
-
-
-def create_presents_table(conn, c):
-    try:
-        c.execute('create table presents'
-                  '(id INTEGER PRIMARY KEY AUTOINCREMENT,'
-                  'dateID INTEGER,'
-                  'personID VARCHAR(255))')
-        conn.commit()
-    except sqlite3.Error as e:
-        pass
-
-
-def create_leaves_table(conn, c):
-    try:
-        c.execute('create table leaves'
-                  '(id INTEGER PRIMARY KEY AUTOINCREMENT,'
-                  'dateID INTEGER,'
-                  'personID VARCHAR(255))')
-        conn.commit()
-    except sqlite3.Error as e:
-        pass
-
+def view_all():
+    conn = sqlite3.connect('attend2.db')
+    c = conn.cursor()
+    ds = c.execute('select * from dates')
+    ds = list(ds)
+    # print(list(ds))
+    # for each date -> for each person
+    print('ATTENDANCE RECORDS:')
+    print('Date: \t\t', end='')
+    for d in ds:
+        print(d[1], end=' ')
+    print()
+    ps = list(c.execute('select id from person'))
+    for p in ps:
+        person = p[0]
+        print(person, end='\t\t')
+        for d in ds:
+            a = c.execute('select dateID from dates where date = ?', (d[1],))
+            did = list(a)[0][0]  # dateID
+            if list(c.execute('select * from presents where dateID=? and personID=?', (did, person))):
+                print('Present', end=4*' ')
+            elif list(c.execute('select * from leaves where dateID=? and personID=?', (did, person))):
+                print('Leave', end=6*' ')
+            else:
+                print('Absent', end=5*' ')
+        print()
 
 if __name__ == '__main__':
+    view_all()
     main()
