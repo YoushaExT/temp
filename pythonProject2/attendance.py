@@ -1,4 +1,5 @@
 import sqlite3
+import datetime
 
 Admins = {}
 Employees = {}
@@ -141,7 +142,7 @@ def login(c):
     return False, None
 
 
-def create_table_person(c):
+def create_table_person(conn, c):
     try:
         c.execute('CREATE TABLE person '
                   '(id VARCHAR(255) PRIMARY KEY,'
@@ -152,6 +153,7 @@ def create_table_person(c):
 
     except sqlite3.Error:
         pass
+    conn.commit()
 
 
 def create_base_admin(conn, c):
@@ -202,7 +204,20 @@ def load(c):
 def main():
     conn = sqlite3.connect('attend2.db')
     c = conn.cursor()
-    create_table_person(c)
+    create_table_person(conn, c)
+
+    # today = datetime.datetime.now().date()
+    # print(today, type(today))
+    # x = datetime.date(2021, 2, 8)
+    # x += datetime.timedelta(days=1)
+    # print(x, type(x))
+    # insert_date(today)
+    # insert_date(x)
+
+    create_date_table(conn, c)
+    create_presents_table(conn, c)
+    create_leaves_table(conn, c)
+    
     print('For testing: Person Table')
     show_table(c)
     if not list(c.execute('select * from person')):
@@ -224,6 +239,46 @@ def main():
             pass
     if isinstance(current_user, Employee):
         print('Employee Menu:')
+
+def create_date_table(conn, c):
+    try:
+        c.execute('create table dates'
+                  '(dateID INTEGER PRIMARY KEY AUTOINCREMENT,'
+                  'date DATE);')
+        conn.commit()
+    except sqlite3.Error:
+        pass
+
+def insert_date(date, conn, c):
+
+    a = c.execute('select date from dates where date = ?', (date,))
+    # print(list(a))
+    if not list(a):
+        print('Doesnt already exist')
+        c.execute('insert into dates (date) values (?)', (date,))
+        conn.commit()
+
+
+def create_presents_table(conn, c):
+    try:
+        c.execute('create table presents'
+                  '(id INTEGER PRIMARY KEY AUTOINCREMENT,'
+                  'dateID INTEGER,'
+                  'personID VARCHAR(255))')
+        conn.commit()
+    except sqlite3.Error as e:
+        pass
+
+
+def create_leaves_table(conn, c):
+    try:
+        c.execute('create table leaves'
+                  '(id INTEGER PRIMARY KEY AUTOINCREMENT,'
+                  'dateID INTEGER,'
+                  'personID VARCHAR(255))')
+        conn.commit()
+    except sqlite3.Error as e:
+        pass
 
 
 if __name__ == '__main__':
