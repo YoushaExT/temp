@@ -8,12 +8,34 @@ class Person:
     def __init__(self, person_id, name, position, pwd):
         self.name, self.position, self.person_id, self.pwd = name, position, person_id, pwd
 
+    def update_name(self, conn, c, uid):
+        print_user_info(c, uid)
+        x = input('Enter a new name:\n')
+        c.execute('update person set name = ? where id = ?', (x, uid))
+        print_user_info(c, uid)
+        conn.commit()
+
+    def update_position(self, conn, c, uid):
+        print_user_info(c, uid)
+        x = input('Enter a new position:\n')
+        c.execute('update person set position = ? where id = ?', (x, uid))
+        print_user_info(c, uid)
+        conn.commit()
+
+    def update_password(self, conn, c, uid):
+        print_user_info(c, uid)
+        x = input('Enter a new password:\n')
+        c.execute('update person set pwd = ? where id = ?', (x, uid))
+        print_user_info(c, uid)
+        conn.commit()
+
 
 class Admin(Person):
     def __init__(self, person_id, name, position, pwd):
         super().__init__(person_id, name, position, pwd)
 
     def menu(self, conn, c):
+        print('ADMIN MENU:')
         choice = input('Press 1 to add a new Employee\n'
                        'Press 2 to add a new Admin\n'
                        'Press 3 to change an Employee\'s profile\n'
@@ -71,7 +93,34 @@ class Admin(Person):
             Employees.pop(uid)
 
     def update_employee(self, conn, c):
-        pass
+        print('Update menu:')
+        def choicePrompt():
+            choice = input('Press 1 to change name\n'
+                           'Press 2 to change position\n'
+                           'Press 3 to change password\n'
+                           'Press q when done\n')
+            return choice
+        show_table(c, 0)  # show only employees
+        uid = input('Which id to update? (Press q to skip):\n')
+        while uid not in Employees:
+            if uid == 'q':
+                return
+            print(f'No employee account with id: {uid} exists in the table!')
+            uid = input('Which id to update? (Press q to skip):\n')
+
+        while True:
+            choice = choicePrompt()
+            if choice == '1':
+                self.update_name(conn, c, uid)
+            elif choice == '2':
+                self.update_position(conn, c, uid)
+            elif choice == '3':
+                self.update_password(conn, c, uid)
+            elif choice == 'q':
+                break
+
+        # conn.commit()
+        show_table(c)
 
 
 class Employee(Person):
@@ -118,14 +167,23 @@ def create_base_admin(conn, c):
     conn.commit()
 
 
-def show_table(c):
-    a = c.execute('select * from person')
-    # for e in a:  # print tuples
-    #     print(e)
+def show_table(c, option=2):
+    # 0 to display employees only, 1 to display admins only, else display all
+    if option in (0, 1):
+        a = c.execute('select * from person where isAdmin = ?', (option,))
+    else:
+        a = c.execute('select * from person')
     for e in a:
         for cell in e:
             print(cell, end=' ')
         print()
+
+
+def print_user_info(c, uid):
+    a = c.execute('select * from person where id = ?', (uid,))
+    for cell in a:
+        print(cell, end=' ')
+    print()
 
 
 def load(c):
@@ -136,13 +194,16 @@ def load(c):
             Admins[entry[0]] = (Admin(entry[0], entry[1], entry[2], entry[3]))
         elif entry[4] == 0:
             Employees[entry[0]] = (Employee(entry[0], entry[1], entry[2], entry[3]))
-        print(entry)
-    print(Admins, Employees)
+        # print(entry)
+    print('For testing, List of all admins and Employees:')
+    print(Admins)
+    print(Employees)
 
 def main():
     conn = sqlite3.connect('attend2.db')
     c = conn.cursor()
     create_table_person(c)
+    print('For testing: Person Table')
     show_table(c)
     if not list(c.execute('select * from person')):
         print('No base admin detected!\n Create a new base admin:')
@@ -157,9 +218,8 @@ def main():
         print('Invalid ID and/or Password!')
     print('Login successful')
     current_user = lg[1]
-    print(current_user)
+    print(f'Welcome {current_user.name}!')
     if isinstance(current_user, Admin):
-        print('Admin Menu:')
         while current_user.menu(conn, c):
             pass
     if isinstance(current_user, Employee):
