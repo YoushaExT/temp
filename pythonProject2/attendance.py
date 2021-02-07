@@ -19,17 +19,20 @@ class Admin(Person):
                        'Press 3 to change an Employee\'s profile\n'
                        'Press 4 to mark your attendance\n'
                        'Press 5 to view all attendance records\n'
+                       'Press 6 to delete a member\n'
                        'Press q to quit\n')
         if choice == '1':
             self.add_member(conn, c, 0)
         elif choice == '2':
             self.add_member(conn, c, 1)
         elif choice == '3':
-            pass
+            self.update_employee(conn, c)
         elif choice == '4':
             pass
         elif choice == '5':
             pass
+        elif choice == '6':
+            self.delete_ppl(conn, c)
         elif choice == 'q':
             return False
         return True  # True to keep asking, False to exit
@@ -50,6 +53,26 @@ class Admin(Person):
                   (uid, name, position, pwd, admin))
         conn.commit()
 
+    def delete_ppl(self, conn, c):
+        show_table(c)
+        uid = input('Which id to delete? (Press q to skip):\n')
+        while not list(c.execute('select * from person where id = ?', (uid,))):
+            if uid == 'q':
+                break
+            print(f'No account with id: {uid} exists in the table!')
+            uid = input('Which id to delete? (Press q to skip):\n')
+        c.execute('delete from person where id = ?', (uid,))
+        conn.commit()
+        show_table(c)
+        # also update python dicts to remove the deleted item
+        if uid in Admins:
+            Admins.pop(uid)
+        elif uid in Employees:
+            Employees.pop(uid)
+
+    def update_employee(self, conn, c):
+        pass
+
 
 class Employee(Person):
     def __init__(self, person_id, name, position, pwd):
@@ -65,14 +88,8 @@ def login(c):
             return True, Admins[in_id]
     elif in_id in Employees:
         if in_pwd == Employees[in_id].pwd:
-            return True, Admins[in_id]
+            return True, Employees[in_id]
     return False, None
-    # result = c.execute('select pwd from person where id = ?', (in_id,))
-    # a = list(result).copy()
-    # if a[0][0] == in_pwd:
-    #     return True
-    # print('Invalid ID and/or password!')
-    # return False
 
 
 def create_table_person(c):
@@ -111,19 +128,6 @@ def show_table(c):
         print()
 
 
-def delete_ppl(conn, c):
-    show_table(c)
-    uid = input('Which id to delete? (Press q to skip):\n')
-    while not list(c.execute('select * from person where id = ?', (uid,))):
-        if uid == 'q':
-            break
-        print(f'No account with id: {uid} exists in the table!')
-        uid = input('Which id to delete? (Press q to skip):\n')
-    c.execute('delete from person where id = ?', (uid,))
-    conn.commit()
-    show_table(c)
-
-
 def load(c):
 
     table = c.execute('select * from person')
@@ -144,31 +148,22 @@ def main():
         print('No base admin detected!\n Create a new base admin:')
         create_base_admin(conn, c)
 
-    # conn.commit  # note: commit not working for actions performed in other functions
-    # a = c.execute('select * from person')
-    # for e in a:
-    #     print(e)
     load(c)
 
     while True:
         lg = login(c)
         if lg[0]:
             break
+        print('Invalid ID and/or Password!')
     print('Login successful')
     current_user = lg[1]
     print(current_user)
     if isinstance(current_user, Admin):
-        print('Admin')
+        print('Admin Menu:')
+        while current_user.menu(conn, c):
+            pass
     if isinstance(current_user, Employee):
-        print('Employee')
-    choice = input('Press 1 to delete a user:\n'
-                   'Press q to exit:\n')
-    if choice == '1':
-        delete_ppl(conn, c)
-    elif choice == 'q':
-        return
-    # y = Admin('Yousha', 'intern', 'yousha123', '12345')
-    # print(y.name, y.position, y.person_id, y.pwd)
+        print('Employee Menu:')
 
 
 if __name__ == '__main__':
