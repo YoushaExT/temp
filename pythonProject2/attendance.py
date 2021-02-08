@@ -83,9 +83,7 @@ class Admin(Person):
         elif choice == '3':
             self.update_employee(conn, c)
         elif choice == '4':
-            # todo change to class method
-            view_all()
-            pass
+            self.view_attendance_all(conn, c)
         elif choice == '5':
             self.delete_ppl(conn, c)
         elif choice == 'p' and not marked:
@@ -160,15 +158,96 @@ class Admin(Person):
         show_table(c)
 
     def view_attendance_all(self, conn, c):
-        # todo
-        pass
+        ds = c.execute('select * from dates')
+        ds = list(ds)
+        # print(list(ds))
+        # for each date -> for each person
+        print('ATTENDANCE RECORDS:')
+        print('Date: \t\t', end='')
+        for d in ds:
+            print(d[1], end=' ')
+        print()
+        ps = list(c.execute('select id from person'))
+        for p in ps:
+            person = p[0]
+            print(person, end='\t\t')
+            for d in ds:
+                a = c.execute('select dateID from dates where date = ?', (d[1],))
+                did = list(a)[0][0]  # dateID
+                if list(c.execute('select * from presents where dateID=? and personID=?', (did, person))):
+                    print('Present', end=4*' ')
+                elif list(c.execute('select * from leaves where dateID=? and personID=?', (did, person))):
+                    print('Leave', end=6*' ')
+                else:
+                    print('Absent', end=5*' ')
+            print()
+
 
 class Employee(Person):
     def __init__(self, person_id, name, position, pwd):
         super().__init__(person_id, name, position, pwd)
 
+    def menu(self, conn, c):
+        a = c.execute('select dateID from dates where date = ?', (TODAY,))
+        did = list(a)[0][0]  # dateID
+        s_p, s_l, marked = '', '', True
+
+        b = c.execute('select * from presents where dateID=? and personID=?', (did, self.person_id))
+        bcopy = list(b)
+        d = c.execute('select * from leaves where dateID=? and personID=?', (did, self.person_id))
+        dcopy = list(d)
+
+        if not bcopy and not dcopy:
+            # not already marked
+            marked = False
+            s_p = 'Press p to mark present for today\n'
+            s_l = 'Press l to mark leave for today\n'
+        print('EMPLOYEE MENU:')
+        print(TODAY, TODAY.strftime('%A'))
+        choice = input('Press 1 to view your attendance record\n'
+                       f'{s_p}{s_l}Press q to quit\n')
+        if choice == '1':
+            # todo implement method
+            self.view_own_attendance(conn, c)
+        elif choice == 'p' and not marked:
+            self.mark_present(conn, c, TODAY)
+        elif choice == 'l' and not marked:
+            self.mark_leave(conn, c, TODAY)
+        elif choice == 'q':
+            return False
+        return True
+
+    def view_own_attendance(self, conn, c):
+        ds = c.execute('select * from dates')
+        ds = list(ds)
+
+        # print first row, begin
+        print('ATTENDANCE RECORDS:')
+        print('Date: \t\t', end='')
+        for d in ds:
+            print(d[1], end=' ')
+        print()
+        # print first row, end
+
+        person = self.person_id
+        print(person, end='\t\t')
+        for d in ds:
+            a = c.execute('select dateID from dates where date = ?', (d[1],))
+            did = list(a)[0][0]  # dateID
+            # change to did = d[0] instead of 2 lines
+            # if present is marked for this date
+            if list(c.execute('select * from presents where dateID=? and personID=?', (did, person))):
+                print('Present', end=4*' ')
+            # if leave is marked for this date
+            elif list(c.execute('select * from leaves where dateID=? and personID=?', (did, person))):
+                print('Leave', end=6*' ')
+            # if not marked for this date
+            else:
+                print('Absent', end=5*' ')
+        print()
 
 def login(c):
+    print('LOGIN')
     in_id = input('Enter your id:\n')
     in_pwd = input('Enter your password:\n')
     if in_id in Admins:
@@ -311,37 +390,10 @@ def main():
         while current_user.menu(conn, c):
             pass
     if isinstance(current_user, Employee):
-        print('Employee Menu:')
-
-
-def view_all():
-    conn = sqlite3.connect('attend2.db')
-    c = conn.cursor()
-    ds = c.execute('select * from dates')
-    ds = list(ds)
-    # print(list(ds))
-    # for each date -> for each person
-    print('ATTENDANCE RECORDS:')
-    print('Date: \t\t', end='')
-    for d in ds:
-        print(d[1], end=' ')
-    print()
-    ps = list(c.execute('select id from person'))
-    for p in ps:
-        person = p[0]
-        print(person, end='\t\t')
-        for d in ds:
-            a = c.execute('select dateID from dates where date = ?', (d[1],))
-            did = list(a)[0][0]  # dateID
-            if list(c.execute('select * from presents where dateID=? and personID=?', (did, person))):
-                print('Present', end=4*' ')
-            elif list(c.execute('select * from leaves where dateID=? and personID=?', (did, person))):
-                print('Leave', end=6*' ')
-            else:
-                print('Absent', end=5*' ')
-        print()
+        while current_user.menu(conn, c):
+            pass
 
 
 if __name__ == '__main__':
-    view_all()
+    # view_all()
     main()
