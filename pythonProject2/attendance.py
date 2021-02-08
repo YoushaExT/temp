@@ -111,6 +111,11 @@ class Admin(Person):
                   'values (?, ?, ?, ?, ?, ?)',
                   (uid, name, position, pwd, admin, self.person_id))
         conn.commit()
+        # also update dict
+        if admin == 1:
+            Admins[uid] = Admin(uid, name, position, pwd)
+        elif admin == 0:
+            Employees[uid] = Employee(uid, name, position, pwd)
 
     def delete_ppl(self, conn, c):
         show_table(c)
@@ -363,7 +368,7 @@ def create_leaves_table(conn, c):
 
 
 def main():
-    conn = sqlite3.connect('attend3.db')
+    conn = sqlite3.connect('attend4.db')
     c = conn.cursor()
     create_table_person(conn, c)
 
