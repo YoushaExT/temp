@@ -54,6 +54,7 @@ class Admin(Person):
         super().__init__(person_id, name, position, pwd)
 
     def menu(self, conn, c):
+        insert_date(TODAY, conn, c)
         a = c.execute('select dateID from dates where date = ?', (TODAY,))
         did = list(a)[0][0]  # dateID
         s_p, s_l, marked = '', '', True
@@ -172,8 +173,7 @@ class Admin(Person):
             person = p[0]
             print(person, end='\t\t')
             for d in ds:
-                a = c.execute('select dateID from dates where date = ?', (d[1],))
-                did = list(a)[0][0]  # dateID
+                did = d[0]
                 if list(c.execute('select * from presents where dateID=? and personID=?', (did, person))):
                     print('Present', end=4*' ')
                 elif list(c.execute('select * from leaves where dateID=? and personID=?', (did, person))):
@@ -188,6 +188,7 @@ class Employee(Person):
         super().__init__(person_id, name, position, pwd)
 
     def menu(self, conn, c):
+        insert_date(TODAY, conn, c)
         a = c.execute('select dateID from dates where date = ?', (TODAY,))
         did = list(a)[0][0]  # dateID
         s_p, s_l, marked = '', '', True
@@ -232,9 +233,7 @@ class Employee(Person):
         person = self.person_id
         print(person, end='\t\t')
         for d in ds:
-            a = c.execute('select dateID from dates where date = ?', (d[1],))
-            did = list(a)[0][0]  # dateID
-            # change to did = d[0] instead of 2 lines
+            did = d[0]
             # if present is marked for this date
             if list(c.execute('select * from presents where dateID=? and personID=?', (did, person))):
                 print('Present', end=4*' ')
@@ -394,6 +393,12 @@ def main():
             pass
 
 
+def test_advance_one_day():
+    global TODAY
+    TODAY += datetime.timedelta(days=1)
+
+
 if __name__ == '__main__':
     # view_all()
+    # test_advance_one_day()
     main()
