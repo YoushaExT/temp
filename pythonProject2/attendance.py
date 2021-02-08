@@ -83,6 +83,8 @@ class Admin(Person):
         elif choice == '3':
             self.update_employee(conn, c)
         elif choice == '4':
+            # todo change to class method
+            view_all()
             pass
         elif choice == '5':
             self.delete_ppl(conn, c)
@@ -338,6 +340,7 @@ def view_all():
             else:
                 print('Absent', end=5*' ')
         print()
+
 
 if __name__ == '__main__':
     view_all()
