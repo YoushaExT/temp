@@ -49,6 +49,37 @@ class Person:
         c.execute('insert into leaves (dateID, personID) values (?, ?)', (did, uid))
         conn.commit()
 
+    def update_self(self, conn, c):
+        print('Update menu:')
+        def choicePrompt():
+            choice = input('Press 1 to change name\n'
+                           'Press 2 to change position\n'
+                           'Press 3 to change password\n'
+                           'Press q when done\n')
+            return choice
+        self.show_self(c)
+        uid = self.person_id
+
+        while True:
+            choice = choicePrompt()
+            if choice == '1':
+                self.update_name(conn, c, uid)
+            elif choice == '2':
+                self.update_position(conn, c, uid)
+            elif choice == '3':
+                self.update_password(conn, c, uid)
+            elif choice == 'q':
+                break
+
+        self.show_self(c)
+
+    def show_self(self, c):
+        a = c.execute('select * from person where id = ?', (self.person_id,))
+        for entry in a:
+            for cell in entry:
+                print(cell, end=' ')
+            print()
+
 class Admin(Person):
     def __init__(self, person_id, name, position, pwd):
         super().__init__(person_id, name, position, pwd)
@@ -76,6 +107,7 @@ class Admin(Person):
                        'Press 3 to change an Employee\'s profile\n'
                        'Press 4 to view all attendance records\n'
                        'Press 5 to delete a member\n'
+                       'Press 6 to change your profile info\n'
                        f'{s_p}{s_l}Press q to quit\n')
         if choice == '1':
             self.add_member(conn, c, 0)
@@ -87,6 +119,8 @@ class Admin(Person):
             self.view_attendance_all(conn, c)
         elif choice == '5':
             self.delete_ppl(conn, c)
+        elif choice == '6':
+            self.update_self(conn, c)
         elif choice == 'p' and not marked:
             self.mark_present(conn, c, TODAY)
         elif choice == 'l' and not marked:
@@ -164,6 +198,7 @@ class Admin(Person):
         # conn.commit()
         show_table(c)
 
+
     def view_attendance_all(self, conn, c):
         ds = c.execute('select * from dates')
         ds = list(ds)
@@ -212,10 +247,12 @@ class Employee(Person):
         print('EMPLOYEE MENU:')
         print(TODAY, TODAY.strftime('%A'))
         choice = input('Press 1 to view your attendance record\n'
+                       'Press 2 to change your profile info\n'
                        f'{s_p}{s_l}Press q to quit\n')
         if choice == '1':
-            # todo implement method
             self.view_own_attendance(conn, c)
+        elif choice == '2':
+            self.update_self(conn, c)
         elif choice == 'p' and not marked:
             self.mark_present(conn, c, TODAY)
         elif choice == 'l' and not marked:
