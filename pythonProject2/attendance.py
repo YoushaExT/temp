@@ -55,9 +55,10 @@ class Person:
             choice = input('Press 1 to change name\n'
                            'Press 2 to change position\n'
                            'Press 3 to change password\n'
+                           'Press 4 to view your profile info\n'
                            'Press q when done\n')
             return choice
-        self.show_self(c)
+        self.show_self(c, True)
         uid = self.person_id
 
         while True:
@@ -71,13 +72,25 @@ class Person:
             elif choice == 'q':
                 break
 
-        self.show_self(c)
+        self.show_self(c, True)
 
-    def show_self(self, c):
-        a = c.execute('select * from person where id = ?', (self.person_id,))
+    def show_self(self, c, filter=False):
+        if not filter:
+            a = c.execute('select * from person where id = ?', (self.person_id,))
+        else:
+            a = c.execute('select id, name, position, lastUpdate from person where id = ?',
+                          (self.person_id,))
+
+        # todo saaf suthra print
+        columns = ['Login ID', 'Name', 'Designation', 'Updated By']
+
+        for col in columns:
+            print(col, end=(12-len(col))*' ')
+        print()
+
         for entry in a:
-            for cell in entry:
-                print(cell, end=' ')
+            for i, cell in enumerate(entry):
+                print(cell, end=(12-len(str(cell)))*' ')
             print()
 
 class Admin(Person):
@@ -108,6 +121,7 @@ class Admin(Person):
                        'Press 4 to view all attendance records\n'
                        'Press 5 to delete a member\n'
                        'Press 6 to change your profile info\n'
+                       'Press 7 to view your own profile info\n'
                        'Press o to logout\n'
                        f'{s_p}{s_l}Press q to quit\n')
         if choice == '1':
@@ -122,6 +136,8 @@ class Admin(Person):
             self.delete_ppl(conn, c)
         elif choice == '6':
             self.update_self(conn, c)
+        elif choice == '7':
+            self.show_self(c, True)
         elif choice == 'p' and not marked:
             self.mark_present(conn, c, TODAY)
         elif choice == 'l' and not marked:
@@ -252,12 +268,15 @@ class Employee(Person):
         print(TODAY, TODAY.strftime('%A'))
         choice = input('Press 1 to view your attendance record\n'
                        'Press 2 to change your profile info\n'
+                       'Press 3 to view your own profile info\n'
                        'Press o to logout\n'
                        f'{s_p}{s_l}Press q to quit\n')
         if choice == '1':
             self.view_own_attendance(conn, c)
         elif choice == '2':
             self.update_self(conn, c)
+        elif choice == '3':
+            self.show_self(c, True)
         elif choice == 'p' and not marked:
             self.mark_present(conn, c, TODAY)
         elif choice == 'l' and not marked:
@@ -333,8 +352,9 @@ def create_base_admin(conn, c):
     pwd = input('Set password of the admin:\n')
     name = input('Set name:\n')
     position = input('Set position:\n')
-    c.execute('insert into person (id, name, position, pwd, isAdmin) values (?, ?, ?, ?, 1)',
-              (uid, name, position, pwd))
+    c.execute('insert into person (id, name, position, pwd, isAdmin, lastUpdate) '
+              'values (?, ?, ?, ?, 1, ?)',
+              (uid, name, position, pwd, uid))
     conn.commit()
 
 
@@ -451,7 +471,7 @@ def test_advance_one_day():
     global TODAY
     TODAY += datetime.timedelta(days=1)
 
-
+# for testing - to change today's date
 def test_retreat_one_day():
     global TODAY
     TODAY -= datetime.timedelta(days=1)
