@@ -108,6 +108,7 @@ class Admin(Person):
                        'Press 4 to view all attendance records\n'
                        'Press 5 to delete a member\n'
                        'Press 6 to change your profile info\n'
+                       'Press o to logout\n'
                        f'{s_p}{s_l}Press q to quit\n')
         if choice == '1':
             self.add_member(conn, c, 0)
@@ -125,6 +126,9 @@ class Admin(Person):
             self.mark_present(conn, c, TODAY)
         elif choice == 'l' and not marked:
             self.mark_leave(conn, c, TODAY)
+        elif choice == 'o':
+            login_menu(conn, c)
+            return False
         elif choice == 'q':
             return False
         return True  # True to keep asking, False to exit
@@ -248,6 +252,7 @@ class Employee(Person):
         print(TODAY, TODAY.strftime('%A'))
         choice = input('Press 1 to view your attendance record\n'
                        'Press 2 to change your profile info\n'
+                       'Press o to logout\n'
                        f'{s_p}{s_l}Press q to quit\n')
         if choice == '1':
             self.view_own_attendance(conn, c)
@@ -257,6 +262,9 @@ class Employee(Person):
             self.mark_present(conn, c, TODAY)
         elif choice == 'l' and not marked:
             self.mark_leave(conn, c, TODAY)
+        elif choice == 'o':
+            login_menu(conn, c)
+            return False
         elif choice == 'q':
             return False
         return True
@@ -404,23 +412,8 @@ def create_leaves_table(conn, c):
         pass
 
 
-def main():
-    conn = sqlite3.connect('attend4.db')
-    c = conn.cursor()
-    create_table_person(conn, c)
-
-    create_date_table(conn, c)
-    create_presents_table(conn, c)
-    create_leaves_table(conn, c)
-
-    print('For testing: Person Table')
-    show_table(c)
-    if not list(c.execute('select * from person')):
-        print('No base admin detected!\n Create a new base admin:')
-        create_base_admin(conn, c)
-
+def login_menu(conn, c):
     load(c)
-
     while True:
         lg = login(c)
         if lg[0]:
@@ -435,6 +428,23 @@ def main():
     if isinstance(current_user, Employee):
         while current_user.menu(conn, c):
             pass
+
+
+def main():
+    conn = sqlite3.connect('attend4.db')
+    c = conn.cursor()
+    create_table_person(conn, c)
+
+    create_date_table(conn, c)
+    create_presents_table(conn, c)
+    create_leaves_table(conn, c)
+
+    print('For testing: Person Table')
+    show_table(c)
+    if not list(c.execute('select * from person')):
+        print('No base admin detected!\n Create a new base admin:')
+        create_base_admin(conn, c)
+    login_menu(conn, c)
 
 
 def test_advance_one_day():
