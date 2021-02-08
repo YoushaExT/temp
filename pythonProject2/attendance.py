@@ -81,7 +81,6 @@ class Person:
             a = c.execute('select id, name, position, lastUpdate from person where id = ?',
                           (self.person_id,))
 
-        # todo saaf suthra print
         columns = ['Login ID', 'Name', 'Designation', 'Updated By']
 
         for col in columns:
@@ -89,7 +88,7 @@ class Person:
         print()
 
         for entry in a:
-            for i, cell in enumerate(entry):
+            for cell in entry:
                 print(cell, end=(12-len(str(cell)))*' ')
             print()
 
@@ -122,6 +121,7 @@ class Admin(Person):
                        'Press 5 to delete a member\n'
                        'Press 6 to change your profile info\n'
                        'Press 7 to view your own profile info\n'
+                       'Press 8 to view all profiles'
                        'Press o to logout\n'
                        f'{s_p}{s_l}Press q to quit\n')
         if choice == '1':
@@ -138,6 +138,8 @@ class Admin(Person):
             self.update_self(conn, c)
         elif choice == '7':
             self.show_self(c, True)
+        elif choice == '8':
+            self.show_all(c, True)
         elif choice == 'p' and not marked:
             self.mark_present(conn, c, TODAY)
         elif choice == 'l' and not marked:
@@ -241,6 +243,23 @@ class Admin(Person):
                     print('Leave', end=6*' ')
                 else:
                     print('Absent', end=5*' ')
+            print()
+
+    def show_all(self, c, filter=False):
+        if not filter:
+            a = c.execute('select * from person')
+        else:
+            a = c.execute('select id, name, position, lastUpdate from person')
+
+        columns = ['Login ID', 'Name', 'Designation', 'Updated By']
+
+        for col in columns:
+            print(col, end=(12-len(col))*' ')
+        print()
+
+        for entry in a:
+            for cell in entry:
+                print(cell, end=(12-len(str(cell)))*' ')
             print()
 
 
