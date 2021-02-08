@@ -13,21 +13,21 @@ class Person:
     def update_name(self, conn, c, uid):
         print_user_info(c, uid)
         x = input('Enter a new name:\n')
-        c.execute('update person set name = ? where id = ?', (x, uid))
+        c.execute('update person set name = ?, lastUpdate=? where id = ?', (x, self.person_id, uid))
         print_user_info(c, uid)
         conn.commit()
 
     def update_position(self, conn, c, uid):
         print_user_info(c, uid)
         x = input('Enter a new position:\n')
-        c.execute('update person set position = ? where id = ?', (x, uid))
+        c.execute('update person set position = ?, lastUpdate=? where id = ?', (x, self.person_id, uid))
         print_user_info(c, uid)
         conn.commit()
 
     def update_password(self, conn, c, uid):
         print_user_info(c, uid)
         x = input('Enter a new password:\n')
-        c.execute('update person set pwd = ? where id = ?', (x, uid))
+        c.execute('update person set pwd = ?, lastUpdate=? where id = ?', (x, self.person_id, uid))
         print_user_info(c, uid)
         conn.commit()
 
@@ -107,8 +107,9 @@ class Admin(Person):
         pwd = input('Set password:\n')
         name = input('Set name:\n')
         position = input('Set position:\n')
-        c.execute('insert into person (id, name, position, pwd, isAdmin) values (?, ?, ?, ?, ?)',
-                  (uid, name, position, pwd, admin))
+        c.execute('insert into person (id, name, position, pwd, isAdmin, lastUpdate) '
+                  'values (?, ?, ?, ?, ?, ?)',
+                  (uid, name, position, pwd, admin, self.person_id))
         conn.commit()
 
     def delete_ppl(self, conn, c):
@@ -266,7 +267,8 @@ def create_table_person(conn, c):
                   ' name VARCHAR(255),'
                   ' position VARCHAR(255),'
                   ' pwd VARCHAR(255),'
-                  ' isAdmin BIT)')
+                  ' isAdmin BIT,'
+                  ' lastUpdate VARCHAR(255))')
 
     except sqlite3.Error:
         pass
@@ -361,7 +363,7 @@ def create_leaves_table(conn, c):
 
 
 def main():
-    conn = sqlite3.connect('attend2.db')
+    conn = sqlite3.connect('attend3.db')
     c = conn.cursor()
     create_table_person(conn, c)
 
@@ -398,7 +400,13 @@ def test_advance_one_day():
     TODAY += datetime.timedelta(days=1)
 
 
+def test_retreat_one_day():
+    global TODAY
+    TODAY -= datetime.timedelta(days=1)
+
+
 if __name__ == '__main__':
     # view_all()
     # test_advance_one_day()
+    # test_retreat_one_day()
     main()
