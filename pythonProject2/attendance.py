@@ -118,10 +118,10 @@ class Admin(Person):
                        'Press 2 to add a new Admin\n'
                        'Press 3 to change an Employee\'s profile\n'
                        'Press 4 to view all attendance records\n'
-                       'Press 5 to delete a member\n'
+                       'Press 5 to delete an Employee\n'
                        'Press 6 to change your profile info\n'
                        'Press 7 to view your own profile info\n'
-                       'Press 8 to view all profiles'
+                       'Press 8 to view all profiles\n'
                        'Press o to logout\n'
                        f'{s_p}{s_l}Press q to quit\n')
         if choice == '1':
@@ -133,7 +133,7 @@ class Admin(Person):
         elif choice == '4':
             self.view_attendance_all(conn, c)
         elif choice == '5':
-            self.delete_ppl(conn, c)
+            self.delete_employee(conn, c)
         elif choice == '6':
             self.update_self(conn, c)
         elif choice == '7':
@@ -173,22 +173,30 @@ class Admin(Person):
         elif admin == 0:
             Employees[uid] = Employee(uid, name, position, pwd)
 
-    def delete_ppl(self, conn, c):
-        show_table(c)
+    def delete_employee(self, conn, c):
+        # will show all person except the current admin
+        show_table(c, 0, self.person_id)
         uid = input('Which id to delete? (Press q to skip):\n')
-        while not list(c.execute('select * from person where id = ?', (uid,))):
+        while not list(c.execute('select * from person where id = ? and isAdmin=0', (uid,))):
             if uid == 'q':
                 break
-            print(f'No account with id: {uid} exists in the table!')
+            print(f'No employee account with id: {uid} exists in the table!')
             uid = input('Which id to delete? (Press q to skip):\n')
+        # redundant
+        # while uid == self.person_id:
+        #     print('Cannot delete self, Provide another id!')
+        #     uid = input('Which id to delete? (Press q to skip):\n')
         c.execute('delete from person where id = ?', (uid,))
+        c.execute('delete from leaves where personID = ?', (uid,))
+        c.execute('delete from presents where personID = ?', (uid,))
         conn.commit()
-        show_table(c)
+        show_table(c, 0, self.person_id)
         # also update python dicts to remove the deleted item
         if uid in Admins:
             Admins.pop(uid)
         elif uid in Employees:
             Employees.pop(uid)
+
 
     def update_employee(self, conn, c):
         print('Update menu:')
@@ -377,12 +385,19 @@ def create_base_admin(conn, c):
     conn.commit()
 
 
-def show_table(c, option=2):
+def show_table(c, option=2, uid=None):
     # 0 to display employees only, 1 to display admins only, else display all
     if option in (0, 1):
-        a = c.execute('select * from person where isAdmin = ?', (option,))
+        if uid:
+            a = c.execute('select * from person where isAdmin = ? and not id = ?'
+                          , (option, uid))
+        else:
+            a = c.execute('select * from person where isAdmin = ?', (option,))
     else:
-        a = c.execute('select * from person')
+        if uid:
+            a = c.execute('select * from person where not id = ?', (uid,))
+        else:
+            a = c.execute('select * from person')
     for e in a:
         for cell in e:
             print(cell, end=' ')
@@ -489,6 +504,7 @@ def main():
 def test_advance_one_day():
     global TODAY
     TODAY += datetime.timedelta(days=1)
+
 
 # for testing - to change today's date
 def test_retreat_one_day():
