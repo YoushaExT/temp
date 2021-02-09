@@ -5,7 +5,7 @@ SuperAdmins = {}
 Admins = {}
 Employees = {}
 TODAY = datetime.datetime.now().date()
-# todo super admin
+
 
 class Person:
     def __init__(self, person_id, name, position, pwd):
@@ -416,9 +416,8 @@ def login(c):
     if in_id in SuperAdmins:
         if in_pwd == SuperAdmins[in_id].pwd:
             return True, SuperAdmins[in_id]
-        pass
-    #todo
-    if in_id in Admins:
+
+    elif in_id in Admins:
         # if password match
         if in_pwd == Admins[in_id].pwd:
             return True, Admins[in_id]
