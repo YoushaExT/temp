@@ -130,3 +130,35 @@ class dbClass:
                   'values (?, ?, ?, ?, 1, ?, 1)',
                   (uid, name, position, pwd, uid))
         self.conn.commit()
+
+    def get_person_table(self):
+
+        table = self.c.execute('select * from person')
+        return list(table)
+    # todo
+    def update_name(self, updater_id, uid):
+
+        x = input('Enter a new name:\n')
+        self.c.execute('update person set name = ?, lastUpdate=? where id = ?', (x, updater_id, uid))
+        self.conn.commit()
+
+    def update_position(self, updater_id, uid):
+
+        x = input('Enter a new position:\n')
+        self.c.execute('update person set position = ?, lastUpdate=? where id = ?', (x, updater_id, uid))
+        self.conn.commit()
+
+    def update_password(self, updater_id, uid):
+
+        x = input('Enter a new password:\n')
+        self.c.execute('update person set pwd = ?, lastUpdate=? where id = ?', (x, updater_id, uid))
+        self.conn.commit()
+
+    def insert_date(self, date):
+
+        a = self.c.execute('select date from dates where date = ?', (date,))
+        # print(list(a))
+        if not list(a):
+            # print('Doesnt already exist')
+            self.c.execute('insert into dates (date) values (?)', (date,))
+            self.conn.commit()

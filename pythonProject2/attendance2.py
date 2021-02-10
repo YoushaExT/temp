@@ -7,39 +7,37 @@ Admins = {}
 Employees = {}
 TODAY = datetime.datetime.now().date()
 
+# todo update pwd
 
 class Person:
     def __init__(self, person_id, name, position, pwd):
         self.name, self.position, self.person_id, self.pwd = name, position, person_id, pwd
         self.db = dbClass('testAttend.db')
 
-    def update_name(self, conn, c, uid):
+    def update_name(self, uid):
 
         self.db.print_user_info(uid)
-        x = input('Enter a new name:\n')
-        c.execute('update person set name = ?, lastUpdate=? where id = ?', (x, self.person_id, uid))
-        conn.commit()
+        # updater, updated
+        self.db.update_name(self.person_id, uid)
         self.db.print_user_info(uid)
 
-    def update_position(self, conn, c, uid):
+    def update_position(self, uid):
 
         self.db.print_user_info(uid)
-        x = input('Enter a new position:\n')
-        c.execute('update person set position = ?, lastUpdate=? where id = ?', (x, self.person_id, uid))
+        # updater, updated
+        self.db.update_position(self.person_id, uid)
         self.db.print_user_info(uid)
-        conn.commit()
 
-    def update_password(self, conn, c, uid):
+    def update_password(self, uid):
 
         self.db.print_user_info(uid)
-        x = input('Enter a new password:\n')
-        c.execute('update person set pwd = ?, lastUpdate=? where id = ?', (x, self.person_id, uid))
+        # updater, updated
+        self.db.update_password(self.person_id, uid)
         self.db.print_user_info(uid)
-        conn.commit()
 
     def mark_present(self, conn, c, date):
         uid = self.person_id
-        insert_date(date, conn, c)
+        # insert_date(date, conn, c)
         a = c.execute('select dateID from dates where date = ?', (date,))
         did = list(a)[0][0]  # dateID
         print(did, date)
@@ -48,7 +46,7 @@ class Person:
 
     def mark_leave(self, conn, c, date):
         uid = self.person_id
-        insert_date(date, conn, c)
+        # insert_date(date, conn, c)
         a = c.execute('select dateID from dates where date = ?', (date,))
         did = list(a)[0][0]  # dateID
         print(did, date)
@@ -70,11 +68,11 @@ class Person:
         while True:
             choice = choicePrompt()
             if choice == '1':
-                self.update_name(conn, c, uid)
+                self.update_name(uid)
             elif choice == '2':
-                self.update_position(conn, c, uid)
+                self.update_position(uid)
             elif choice == '3':
-                self.update_password(conn, c, uid)
+                self.update_password(uid)
             elif choice == 'q':
                 break
 
@@ -104,7 +102,7 @@ class Admin(Person):
         super().__init__(person_id, name, position, pwd)
 
     def menu(self, conn, c):
-        insert_date(TODAY, conn, c)
+        # insert_date(TODAY, conn, c)
         a = c.execute('select dateID from dates where date = ?', (TODAY,))
         did = list(a)[0][0]  # dateID
         s_p, s_l, marked = '', '', True
@@ -231,11 +229,11 @@ class Admin(Person):
         while True:
             choice = choicePrompt()
             if choice == '1':
-                self.update_name(conn, c, uid)
+                self.update_name(uid)
             elif choice == '2':
-                self.update_position(conn, c, uid)
+                self.update_position(uid)
             elif choice == '3':
-                self.update_password(conn, c, uid)
+                self.update_password(uid)
             elif choice == 'q':
                 break
 
@@ -276,7 +274,7 @@ class Employee(Person):
         super().__init__(person_id, name, position, pwd)
 
     def menu(self, conn, c):
-        insert_date(TODAY, conn, c)
+        # insert_date(TODAY, conn, c)
         a = c.execute('select dateID from dates where date = ?', (TODAY,))
         did = list(a)[0][0]  # dateID
         s_p, s_l, marked = '', '', True
@@ -348,7 +346,7 @@ class SuperAdmin(Admin):
         super().__init__(person_id, name, position, pwd)
 
     def menu(self, conn, c):
-        insert_date(TODAY, conn, c)
+        # insert_date(TODAY, conn, c)
         a = c.execute('select dateID from dates where date = ?', (TODAY,))
         did = list(a)[0][0]  # dateID
         s_p, s_l, marked = '', '', True
@@ -399,7 +397,7 @@ class SuperAdmin(Admin):
     pass
 
 
-def login(c):
+def login():
     print('LOGIN')
     in_id = input('Enter your id:\n')
     in_pwd = input('Enter your password:\n')
@@ -435,19 +433,19 @@ def create_table_person(conn, c):
     conn.commit()
 
 
-def load(c):
-    table = c.execute('select * from person')
-    for entry in table:
-        if entry[5] == 1:
-            SuperAdmins[entry[0]] = (SuperAdmin(entry[0], entry[1], entry[2], entry[3]))
-        if entry[4] == 1:
-            Admins[entry[0]] = (Admin(entry[0], entry[1], entry[2], entry[3]))
-        elif entry[4] == 0:
-            Employees[entry[0]] = (Employee(entry[0], entry[1], entry[2], entry[3]))
-        # print(entry)
-    print('For testing, List of all admins and Employees:')
-    print(Admins)
-    print(Employees)
+# def load(c):
+#     table = c.execute('select * from person')
+#     for entry in table:
+#         if entry[5] == 1:
+#             SuperAdmins[entry[0]] = (SuperAdmin(entry[0], entry[1], entry[2], entry[3]))
+#         if entry[4] == 1:
+#             Admins[entry[0]] = (Admin(entry[0], entry[1], entry[2], entry[3]))
+#         elif entry[4] == 0:
+#             Employees[entry[0]] = (Employee(entry[0], entry[1], entry[2], entry[3]))
+#         # print(entry)
+#     print('For testing, List of all admins and Employees:')
+#     print(Admins)
+#     print(Employees)
 
 
 def create_date_table(conn, c):
@@ -460,14 +458,14 @@ def create_date_table(conn, c):
         pass
 
 
-def insert_date(date, conn, c):
-
-    a = c.execute('select date from dates where date = ?', (date,))
-    # print(list(a))
-    if not list(a):
-        # print('Doesnt already exist')
-        c.execute('insert into dates (date) values (?)', (date,))
-        conn.commit()
+# def insert_date(date, conn, c):
+#
+#     a = c.execute('select date from dates where date = ?', (date,))
+#     # print(list(a))
+#     if not list(a):
+#         # print('Doesnt already exist')
+#         c.execute('insert into dates (date) values (?)', (date,))
+#         conn.commit()
 
 
 def create_presents_table(conn, c):
@@ -493,9 +491,9 @@ def create_leaves_table(conn, c):
 
 
 def login_menu(conn, c):
-    load(c)
+    # load(c) # todo
     while True:
-        lg = login(c)
+        lg = login()
         if lg[0]:
             break
         print('Invalid ID and/or Password!')
@@ -511,6 +509,7 @@ class AttendanceDatabaseBuilder:
     def __init__(self, databaseName):
         # self.conn = sqlite3.connect(databaseName)
         self.db = dbClass(databaseName)
+        self.load()
     # def getConnector(self):
     #     return self.conn
 
@@ -534,6 +533,24 @@ class AttendanceDatabaseBuilder:
     def create_base_admin(self):
         self.db.create_base_admin()
 
+    def load(self):
+        self.db.insert_date(TODAY)
+        table = self.db.get_person_table()
+        for entry in table:
+            if entry[5] == 1:
+                SuperAdmins[entry[0]] = (SuperAdmin(entry[0], entry[1], entry[2], entry[3]))
+            if entry[4] == 1:
+                Admins[entry[0]] = (Admin(entry[0], entry[1], entry[2], entry[3]))
+            elif entry[4] == 0:
+                Employees[entry[0]] = (Employee(entry[0], entry[1], entry[2], entry[3]))
+            # print(entry)
+        print('For testing, List of all admins and Employees:')
+        print(Admins)
+        print(Employees)
+
+    def insert_date(self, date):
+
+        self.db.insert_date(date)
 
 def main():
     databaseBuilder = AttendanceDatabaseBuilder('testAttend.db')
