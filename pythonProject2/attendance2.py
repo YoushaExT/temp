@@ -35,23 +35,23 @@ class Person:
         self.db.update_password(self.person_id, uid)
         self.db.print_user_info(uid)
 
-    def mark_present(self, conn, c, date):
+    def mark_present(self, date):
         uid = self.person_id
         # insert_date(date, conn, c)
-        a = c.execute('select dateID from dates where date = ?', (date,))
-        did = list(a)[0][0]  # dateID
-        print(did, date)
-        c.execute('insert into presents (dateID, personID) values (?, ?)', (did, uid))
-        conn.commit()
+        did = self.db.get_date_id(date)
+        # a = c.execute('select dateID from dates where date = ?', (date,))
+        # did = list(a)[0][0]  # dateID
+        # print(did, date)
+        self.db.insert_present(did, uid)
 
-    def mark_leave(self, conn, c, date):
+    def mark_leave(self, date):
         uid = self.person_id
         # insert_date(date, conn, c)
-        a = c.execute('select dateID from dates where date = ?', (date,))
-        did = list(a)[0][0]  # dateID
-        print(did, date)
-        c.execute('insert into leaves (dateID, personID) values (?, ?)', (did, uid))
-        conn.commit()
+        did = self.db.get_date_id(date)
+        # a = c.execute('select dateID from dates where date = ?', (date,))
+        # did = list(a)[0][0]  # dateID
+        # print(did, date)
+        self.db.insert_leave(did, uid)
 
     def update_self(self, conn, c):
         print('Update menu:')
@@ -143,11 +143,11 @@ class Admin(Person):
         elif choice == '7':
             self.show_all()
         elif choice == 'p' and not marked:
-            self.mark_present(conn, c, TODAY)
+            self.mark_present(TODAY)
         elif choice == 'l' and not marked:
-            self.mark_leave(conn, c, TODAY)
+            self.mark_leave(TODAY)
         elif choice == 'o':
-            login_menu(conn, c)
+            main()
             return False
         elif choice == 'q':
             return False
@@ -303,11 +303,11 @@ class Employee(Person):
         elif choice == '3':
             self.show_self()
         elif choice == 'p' and not marked:
-            self.mark_present(conn, c, TODAY)
+            self.mark_present(TODAY)
         elif choice == 'l' and not marked:
-            self.mark_leave(conn, c, TODAY)
+            self.mark_leave(TODAY)
         elif choice == 'o':
-            login_menu(conn, c)
+            main()
             return False
         elif choice == 'q':
             return False
@@ -385,11 +385,11 @@ class SuperAdmin(Admin):
         elif choice == '6':
             self.show_all()
         elif choice == 'p' and not marked:
-            self.mark_present(conn, c, TODAY)
+            self.mark_present(TODAY)
         elif choice == 'l' and not marked:
-            self.mark_leave(conn, c, TODAY)
+            self.mark_leave(TODAY)
         elif choice == 'o':
-            login_menu(conn, c)
+            main()
             return False
         elif choice == 'q':
             return False
@@ -490,8 +490,9 @@ def create_leaves_table(conn, c):
         pass
 
 
-def login_menu(conn, c):
+def login_menu(database_builder, conn, c):
     # load(c) # todo
+    database_builder.load()
     while True:
         lg = login()
         if lg[0]:
@@ -572,7 +573,7 @@ def main():
     if databaseBuilder.is_person_empty():
         print('No base admin detected!\n Create a new base admin:')
         databaseBuilder.create_base_admin()
-    login_menu(conn, c)
+    login_menu(databaseBuilder, conn, c)
 
 
 def test_advance_one_day():

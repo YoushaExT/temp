@@ -162,3 +162,16 @@ class dbClass:
             # print('Doesnt already exist')
             self.c.execute('insert into dates (date) values (?)', (date,))
             self.conn.commit()
+
+    def get_date_id(self, date):
+        a = self.c.execute('select dateID from dates where date = ?', (date,))
+        did = list(a)[0][0]  # dateID
+        return did
+
+    def insert_present(self, did, uid):
+        self.c.execute('insert into presents (dateID, personID) values (?, ?)', (did, uid))
+        self.conn.commit()
+
+    def insert_leave(self, did, uid):
+        self.c.execute('insert into leaves (dateID, personID) values (?, ?)', (did, uid))
+        self.conn.commit()
