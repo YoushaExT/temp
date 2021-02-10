@@ -113,14 +113,20 @@ class dbClass:
             pass
         self.conn.commit()
 
-    def is_person_empty(self):
-        if list(self.c.execute('select * from person')):
+    # def is_person_empty(self):
+    #     if list(self.c.execute('select * from person')):
+    #         return False
+    #     return True
+
+    def does_superadmin_exist(self):
+        if list(self.c.execute('select * from person where isSuperAdmin=1')):
             return False
         return True
 
     def create_base_admin(self):
         uid = input('Set login id of the admin:\n')
-        while list(self.c.execute('select * from person where id = ?', (uid,))):
+        while self.does_person_exist(uid):
+        # while list(self.c.execute('select * from person where id = ?', (uid,))):
             print(f'User ID:{uid} already exists, provide a unique ID!')
             uid = input('Set login id of the admin:\n')
         pwd = input('Set password of the admin:\n')
@@ -136,8 +142,8 @@ class dbClass:
         table = self.c.execute('select * from person')
         return list(table)
     # todo
-    def update_name(self, updater_id, uid):
 
+    def update_name(self, updater_id, uid):
         x = input('Enter a new name:\n')
         self.c.execute('update person set name = ?, lastUpdate=? where id = ?', (x, updater_id, uid))
         self.conn.commit()
@@ -175,3 +181,53 @@ class dbClass:
     def insert_leave(self, did, uid):
         self.c.execute('insert into leaves (dateID, personID) values (?, ?)', (did, uid))
         self.conn.commit()
+
+    def check_absent(self, did, pid):
+        # b = self.c.execute('select * from presents where dateID=? and personID=?', (did, pid))
+        # bcopy = list(b)
+        # d = self.c.execute('select * from leaves where dateID=? and personID=?', (did, pid))
+        # dcopy = list(d)
+        # print(bcopy, dcopy, self.person_id, did, type(did))
+        if not self.check_present(did, pid) and not self.check_leave(did, pid):
+            return True
+        return False
+
+    def check_present(self, did, pid):
+        b = self.c.execute('select * from presents where dateID=? and personID=?', (did, pid))
+        bcopy = list(b)
+        return True if bcopy else False
+
+    def check_leave(self, did, pid):
+        d = self.c.execute('select * from leaves where dateID=? and personID=?', (did, pid))
+        dcopy = list(d)
+        return True if dcopy else False
+
+    def does_person_exist(self, uid):
+        if list(self.c.execute('select * from person where id = ?', (uid,))):
+            return True
+        return False
+
+    def does_admin_exist(self, uid):
+        if list(self.c.execute('select * from person where id = ? and isAdmin=1', (uid,))):
+            return True
+        return False
+
+    def insert_person(self, uid, name, position, pwd, admin, pid):
+        self.c.execute('insert into person (id, name, position, pwd, isAdmin, lastUpdate) '
+                  'values (?, ?, ?, ?, ?, ?)',
+                  (uid, name, position, pwd, admin, pid))
+        self.conn.commit()
+
+    def delete_person(self, uid):
+        self.c.execute('delete from person where id = ?', (uid,))
+        self.c.execute('delete from leaves where personID = ?', (uid,))
+        self.c.execute('delete from presents where personID = ?', (uid,))
+        self.conn.commit()
+
+    def get_dates_table(self):
+        ds = self.c.execute('select * from dates')
+        ds = list(ds)
+        return ds
+
+    def get_all_person_ids(self):
+        return list(self.c.execute('select id from person'))

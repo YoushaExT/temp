@@ -1,4 +1,4 @@
-import sqlite3
+# import sqlite3
 import datetime
 from attendanceDatabaseClass import dbClass
 
@@ -7,12 +7,14 @@ Admins = {}
 Employees = {}
 TODAY = datetime.datetime.now().date()
 
-# todo update pwd
+# todo bugs:
+# super admin can delete himself
 
 class Person:
-    def __init__(self, person_id, name, position, pwd):
+    def __init__(self, person_id, name, position, pwd, db):
         self.name, self.position, self.person_id, self.pwd = name, position, person_id, pwd
-        self.db = dbClass('testAttend.db')
+        self.db = db
+        # self.db = dbClass('testAttend.db')
 
     def update_name(self, uid):
 
@@ -37,23 +39,15 @@ class Person:
 
     def mark_present(self, date):
         uid = self.person_id
-        # insert_date(date, conn, c)
         did = self.db.get_date_id(date)
-        # a = c.execute('select dateID from dates where date = ?', (date,))
-        # did = list(a)[0][0]  # dateID
-        # print(did, date)
         self.db.insert_present(did, uid)
 
     def mark_leave(self, date):
         uid = self.person_id
-        # insert_date(date, conn, c)
         did = self.db.get_date_id(date)
-        # a = c.execute('select dateID from dates where date = ?', (date,))
-        # did = list(a)[0][0]  # dateID
-        # print(did, date)
         self.db.insert_leave(did, uid)
 
-    def update_self(self, conn, c):
+    def update_self(self):
         print('Update menu:')
         def choicePrompt():
             choice = input('Press 1 to change name\n'
@@ -80,39 +74,25 @@ class Person:
 
     def show_self(self, filter=True):
         self.db.print_user_info(self.person_id, filter)
-        # if not filter:
-        #     a = c.execute('select * from person where id = ?', (self.person_id,))
-        # else:
-        #     a = c.execute('select id, name, position, lastUpdate from person where id = ?',
-        #                   (self.person_id,))
-        #
-        # columns = ['Login ID', 'Name', 'Designation', 'Updated By']
-        #
-        # for col in columns:
-        #     print(col, end=(12-len(col))*' ')
-        # print()
-        #
-        # for entry in a:
-        #     for cell in entry:
-        #         print(cell, end=(12-len(str(cell)))*' ')
-        #     print()
+
 
 class Admin(Person):
-    def __init__(self, person_id, name, position, pwd):
-        super().__init__(person_id, name, position, pwd)
+    def __init__(self, person_id, name, position, pwd, db):
+        super().__init__(person_id, name, position, pwd, db)
 
-    def menu(self, conn, c):
+    def menu(self):
         # insert_date(TODAY, conn, c)
-        a = c.execute('select dateID from dates where date = ?', (TODAY,))
-        did = list(a)[0][0]  # dateID
+        # a = c.execute('select dateID from dates where date = ?', (TODAY,))
+        # did = list(a)[0][0]  # dateID
+        did = self.db.get_date_id(TODAY)
         s_p, s_l, marked = '', '', True
 
-        b = c.execute('select * from presents where dateID=? and personID=?', (did, self.person_id))
-        bcopy = list(b)
-        d = c.execute('select * from leaves where dateID=? and personID=?', (did, self.person_id))
-        dcopy = list(d)
-        # print(bcopy, dcopy, self.person_id, did, type(did))
-        if not bcopy and not dcopy:
+        # b = c.execute('select * from presents where dateID=? and personID=?', (did, self.person_id))
+        # bcopy = list(b)
+        # d = c.execute('select * from leaves where dateID=? and personID=?', (did, self.person_id))
+        # dcopy = list(d)
+        # # print(bcopy, dcopy, self.person_id, did, type(did))
+        if self.db.check_absent(did, self.person_id):
             # not already marked
             marked = False
             s_p = 'Press p to mark present for today\n'
@@ -129,15 +109,15 @@ class Admin(Person):
                        'Press o to logout\n'
                        f'{s_p}{s_l}Press q to quit\n')
         if choice == '1':
-            self.add_member(conn, c, 0)
+            self.add_member(0)
         elif choice == '2':
-            self.update_employee(conn, c) #todo
+            self.update_employee()
         elif choice == '3':
-            self.view_attendance_all(conn, c)
+            self.view_attendance_all()
         elif choice == '4':
-            self.delete_member(conn, c)
+            self.delete_member()
         elif choice == '5':
-            self.update_self(conn, c)
+            self.update_self()
         elif choice == '6':
             self.show_self()
         elif choice == '7':
@@ -152,57 +132,67 @@ class Admin(Person):
         elif choice == 'q':
             return False
         return True  # True to keep asking, False to exit
-        # can add members
-        # can change employee profile (update last column to show which admin updated)
-        # can mark his own attendance {inherit?}
-        # can view attendance records of all employees+admins
 
-    def add_member(self, conn, c, admin):
+
+    def add_member(self, admin):
         uid = input('Set login:\n')
-        while list(c.execute('select * from person where id = ?', (uid,))):
+        while self.db.does_person_exist(uid):
             print(f'User ID:{uid} already exists, provide a unique ID!')
             uid = input('Set login id:\n')
         pwd = input('Set password:\n')
         name = input('Set name:\n')
         position = input('Set position:\n')
-        c.execute('insert into person (id, name, position, pwd, isAdmin, lastUpdate) '
-                  'values (?, ?, ?, ?, ?, ?)',
-                  (uid, name, position, pwd, admin, self.person_id))
-        conn.commit()
+
+        self.db.insert_person(uid, name, position, pwd, admin, self.person_id)
+        # c.execute('insert into person (id, name, position, pwd, isAdmin, lastUpdate) '
+        #           'values (?, ?, ?, ?, ?, ?)',
+        #           (uid, name, position, pwd, admin, self.person_id))
+        # conn.commit()
         # also update dict
         if admin == 1:
-            Admins[uid] = Admin(uid, name, position, pwd)
+            Admins[uid] = Admin(uid, name, position, pwd, self.db)
         elif admin == 0:
-            Employees[uid] = Employee(uid, name, position, pwd)
+            Employees[uid] = Employee(uid, name, position, pwd, self.db)
 
-    def delete_member(self, conn, c, su = False):
+    def delete_member(self, su = False):
         # will show all person except the current admin
 
         if not su:
             self.db.show_table(0)
             uid = input('Which id to delete? (Press q to skip):\n')
-            while not list(c.execute('select * from person where id = ? and isAdmin=0', (uid,))):
+            while not self.db.does_person_exist(uid):
+            # while not list(c.execute('select * from person where id = ? and isAdmin=0', (uid,))):
                 if uid == 'q':
-                    break
+                    # break
+                    return
                 print(f'No employee account with id: {uid} exists in the table!')
                 uid = input('Which id to delete? (Press q to skip):\n')
         else:
             self.db.show_table(1, self.person_id)
             uid = input('Which id to delete? (Press q to skip):\n')
+
             while uid == self.person_id:
                 print('Cannot delete self, Provide another id!')
                 uid = input('Which id to delete? (Press q to skip):\n')
-            while not list(c.execute('select * from person where id = ? and isAdmin=1', (uid,))):
+            while not self.db.does_person_exist(uid):
+            # while not list(c.execute('select * from person where id = ? and isAdmin=1', (uid,))):
                 if uid == 'q':
-                    break
+                    # break
+                    return
                 print(f'No employee account with id: {uid} exists in the table!')
                 uid = input('Which id to delete? (Press q to skip):\n')
-        c.execute('delete from person where id = ?', (uid,))
-        c.execute('delete from leaves where personID = ?', (uid,))
-        c.execute('delete from presents where personID = ?', (uid,))
-        conn.commit()
+
+                while uid == self.person_id:
+                    print('Cannot delete self, Provide another id!')
+                    uid = input('Which id to delete? (Press q to skip):\n')
+
+        self.db.delete_person(uid)
+        # c.execute('delete from person where id = ?', (uid,))
+        # c.execute('delete from leaves where personID = ?', (uid,))
+        # c.execute('delete from presents where personID = ?', (uid,))
+        # conn.commit()
         # show either employee table or admin table excluding super admin
-        self.db.show_table(1) if su else self.db.show_table(0, self.person_id)
+        self.db.show_table(1, self.person_id) if su else self.db.show_table(0)
         # also update python dicts to remove the deleted item
         if uid in Admins:
             Admins.pop(uid)
@@ -210,7 +200,7 @@ class Admin(Person):
             Employees.pop(uid)
 
 
-    def update_employee(self, conn, c):
+    def update_employee(self):
         print('Update menu:')
         def choicePrompt():
             choice = input('Press 1 to change name\n'
@@ -240,9 +230,9 @@ class Admin(Person):
         # conn.commit()
         self.db.show_table()
 
-    def view_attendance_all(self, conn, c):
-        ds = c.execute('select * from dates')
-        ds = list(ds)
+    def view_attendance_all(self):
+
+        ds = self.db.get_dates_table()
         # print(list(ds))
         # for each date -> for each person
         print('ATTENDANCE RECORDS:')
@@ -250,15 +240,21 @@ class Admin(Person):
         for d in ds:
             print(d[1], end=' ')
         print()
-        ps = list(c.execute('select id from person'))
+
+        # ps = list(c.execute('select id from person'))
+        ps = self.db.get_all_person_ids()
         for p in ps:
             person = p[0]
             print(person, end='\t\t')
             for d in ds:
                 did = d[0]
-                if list(c.execute('select * from presents where dateID=? and personID=?', (did, person))):
+                # if list(c.execute('select * from presents where dateID=? and personID=?', (did, person))):
+                #     print('Present', end=4*' ')
+                # elif list(c.execute('select * from leaves where dateID=? and personID=?', (did, person))):
+                #     print('Leave', end=6*' ')
+                if self.db.check_present(did, person):
                     print('Present', end=4*' ')
-                elif list(c.execute('select * from leaves where dateID=? and personID=?', (did, person))):
+                elif self.db.check_leave(did, person):
                     print('Leave', end=6*' ')
                 else:
                     print('Absent', end=5*' ')
@@ -270,25 +266,28 @@ class Admin(Person):
 
 
 class Employee(Person):
-    def __init__(self, person_id, name, position, pwd):
-        super().__init__(person_id, name, position, pwd)
+    def __init__(self, person_id, name, position, pwd, db):
+        super().__init__(person_id, name, position, pwd, db)
 
-    def menu(self, conn, c):
+
+    def menu(self):
         # insert_date(TODAY, conn, c)
-        a = c.execute('select dateID from dates where date = ?', (TODAY,))
-        did = list(a)[0][0]  # dateID
+        # a = c.execute('select dateID from dates where date = ?', (TODAY,))
+        # did = list(a)[0][0]  # dateID
+        did = self.db.get_date_id(TODAY)
         s_p, s_l, marked = '', '', True
 
-        b = c.execute('select * from presents where dateID=? and personID=?', (did, self.person_id))
-        bcopy = list(b)
-        d = c.execute('select * from leaves where dateID=? and personID=?', (did, self.person_id))
-        dcopy = list(d)
-
-        if not bcopy and not dcopy:
+        # b = c.execute('select * from presents where dateID=? and personID=?', (did, self.person_id))
+        # bcopy = list(b)
+        # d = c.execute('select * from leaves where dateID=? and personID=?', (did, self.person_id))
+        # dcopy = list(d)
+        # # print(bcopy, dcopy, self.person_id, did, type(did))
+        if self.db.check_absent(did, self.person_id):
             # not already marked
             marked = False
             s_p = 'Press p to mark present for today\n'
             s_l = 'Press l to mark leave for today\n'
+
         print('EMPLOYEE MENU:')
         print(TODAY, TODAY.strftime('%A'))
         choice = input('Press 1 to view your attendance record\n'
@@ -297,9 +296,9 @@ class Employee(Person):
                        'Press o to logout\n'
                        f'{s_p}{s_l}Press q to quit\n')
         if choice == '1':
-            self.view_own_attendance(conn, c)
+            self.view_own_attendance()
         elif choice == '2':
-            self.update_self(conn, c)
+            self.update_self()
         elif choice == '3':
             self.show_self()
         elif choice == 'p' and not marked:
@@ -313,9 +312,10 @@ class Employee(Person):
             return False
         return True
 
-    def view_own_attendance(self, conn, c):
-        ds = c.execute('select * from dates')
-        ds = list(ds)
+    def view_own_attendance(self):
+        # ds = c.execute('select * from dates')
+        # ds = list(ds)
+        ds = self.db.get_dates_table()
 
         # print first row, begin
         print('ATTENDANCE RECORDS:')
@@ -330,10 +330,12 @@ class Employee(Person):
         for d in ds:
             did = d[0]
             # if present is marked for this date
-            if list(c.execute('select * from presents where dateID=? and personID=?', (did, person))):
+            if self.db.check_present(did, person):
+            # if list(c.execute('select * from presents where dateID=? and personID=?', (did, person))):
                 print('Present', end=4*' ')
             # if leave is marked for this date
-            elif list(c.execute('select * from leaves where dateID=? and personID=?', (did, person))):
+            elif self.db.check_leave(did, person):
+            # elif list(c.execute('select * from leaves where dateID=? and personID=?', (did, person))):
                 print('Leave', end=6*' ')
             # if not marked for this date
             else:
@@ -342,25 +344,28 @@ class Employee(Person):
 
 
 class SuperAdmin(Admin):
-    def __init__(self, person_id, name, position, pwd):
-        super().__init__(person_id, name, position, pwd)
+    def __init__(self, person_id, name, position, pwd, db):
+        super().__init__(person_id, name, position, pwd, db)
 
-    def menu(self, conn, c):
+
+    def menu(self):
         # insert_date(TODAY, conn, c)
-        a = c.execute('select dateID from dates where date = ?', (TODAY,))
-        did = list(a)[0][0]  # dateID
+        # a = c.execute('select dateID from dates where date = ?', (TODAY,))
+        # did = list(a)[0][0]  # dateID
+        did = self.db.get_date_id(TODAY)
         s_p, s_l, marked = '', '', True
 
-        b = c.execute('select * from presents where dateID=? and personID=?', (did, self.person_id))
-        bcopy = list(b)
-        d = c.execute('select * from leaves where dateID=? and personID=?', (did, self.person_id))
-        dcopy = list(d)
-        # print(bcopy, dcopy, self.person_id, did, type(did))
-        if not bcopy and not dcopy:
+        # b = c.execute('select * from presents where dateID=? and personID=?', (did, self.person_id))
+        # bcopy = list(b)
+        # d = c.execute('select * from leaves where dateID=? and personID=?', (did, self.person_id))
+        # dcopy = list(d)
+        # # print(bcopy, dcopy, self.person_id, did, type(did))
+        if self.db.check_absent(did, self.person_id):
             # not already marked
             marked = False
             s_p = 'Press p to mark present for today\n'
             s_l = 'Press l to mark leave for today\n'
+
         print('SUPER ADMIN MENU:')
         print(TODAY, TODAY.strftime('%A'))
         choice = input('Press 1 to add a new Admin\n'
@@ -373,13 +378,13 @@ class SuperAdmin(Admin):
                        f'{s_p}{s_l}Press q to quit\n')
 
         if choice == '1':
-            self.add_member(conn, c, 1)
+            self.add_member(1)
         elif choice == '2':
-            self.view_attendance_all(conn, c)
+            self.view_attendance_all()
         elif choice == '3':
-            self.delete_member(conn, c, True)
+            self.delete_member(True)
         elif choice == '4':
-            self.update_self(conn, c)
+            self.update_self()
         elif choice == '5':
             self.show_self()
         elif choice == '6':
@@ -394,7 +399,6 @@ class SuperAdmin(Admin):
         elif choice == 'q':
             return False
         return True  # True to keep asking, False to exit
-    pass
 
 
 def login():
@@ -417,80 +421,7 @@ def login():
     return False, None
 
 
-def create_table_person(conn, c):
-    try:
-        c.execute('CREATE TABLE person '
-                  '(id VARCHAR(255) PRIMARY KEY,'
-                  ' name VARCHAR(255),'
-                  ' position VARCHAR(255),'
-                  ' pwd VARCHAR(255),'
-                  ' isAdmin BIT,'
-                  ' isSuperAdmin BIT DEFAULT 0,'
-                  ' lastUpdate VARCHAR(255))')
-
-    except sqlite3.Error:
-        pass
-    conn.commit()
-
-
-# def load(c):
-#     table = c.execute('select * from person')
-#     for entry in table:
-#         if entry[5] == 1:
-#             SuperAdmins[entry[0]] = (SuperAdmin(entry[0], entry[1], entry[2], entry[3]))
-#         if entry[4] == 1:
-#             Admins[entry[0]] = (Admin(entry[0], entry[1], entry[2], entry[3]))
-#         elif entry[4] == 0:
-#             Employees[entry[0]] = (Employee(entry[0], entry[1], entry[2], entry[3]))
-#         # print(entry)
-#     print('For testing, List of all admins and Employees:')
-#     print(Admins)
-#     print(Employees)
-
-
-def create_date_table(conn, c):
-    try:
-        c.execute('create table dates'
-                  '(dateID INTEGER PRIMARY KEY AUTOINCREMENT,'
-                  'date DATE);')
-        conn.commit()
-    except sqlite3.Error:
-        pass
-
-
-# def insert_date(date, conn, c):
-#
-#     a = c.execute('select date from dates where date = ?', (date,))
-#     # print(list(a))
-#     if not list(a):
-#         # print('Doesnt already exist')
-#         c.execute('insert into dates (date) values (?)', (date,))
-#         conn.commit()
-
-
-def create_presents_table(conn, c):
-    try:
-        c.execute('create table presents'
-                  '(id INTEGER PRIMARY KEY AUTOINCREMENT,'
-                  'dateID INTEGER,'
-                  'personID VARCHAR(255))')
-        conn.commit()
-    except sqlite3.Error as e:
-        pass
-
-
-def create_leaves_table(conn, c):
-    try:
-        c.execute('create table leaves'
-                  '(id INTEGER PRIMARY KEY AUTOINCREMENT,'
-                  'dateID INTEGER,'
-                  'personID VARCHAR(255))')
-        conn.commit()
-    except sqlite3.Error as e:
-        pass
-
-
-def login_menu(database_builder, conn, c):
+def login_menu(database_builder):
     # load(c) # todo
     database_builder.load()
     while True:
@@ -502,7 +433,7 @@ def login_menu(database_builder, conn, c):
     current_user = lg[1]
     print(f'Welcome {current_user.name}!')
 
-    while current_user.menu(conn, c):
+    while current_user.menu():
         pass
 
 
@@ -528,8 +459,11 @@ class AttendanceDatabaseBuilder:
         self.db.create_leaves_table()
         pass
 
-    def is_person_empty(self):
-        return self.db.is_person_empty()
+    # def is_person_empty(self):
+    #     return self.db.is_person_empty()
+
+    def does_superadmin_exist(self):
+        return self.db.does_superadmin_exist()
 
     def create_base_admin(self):
         self.db.create_base_admin()
@@ -539,11 +473,11 @@ class AttendanceDatabaseBuilder:
         table = self.db.get_person_table()
         for entry in table:
             if entry[5] == 1:
-                SuperAdmins[entry[0]] = (SuperAdmin(entry[0], entry[1], entry[2], entry[3]))
+                SuperAdmins[entry[0]] = (SuperAdmin(entry[0], entry[1], entry[2], entry[3], self.db))
             if entry[4] == 1:
-                Admins[entry[0]] = (Admin(entry[0], entry[1], entry[2], entry[3]))
+                Admins[entry[0]] = (Admin(entry[0], entry[1], entry[2], entry[3], self.db))
             elif entry[4] == 0:
-                Employees[entry[0]] = (Employee(entry[0], entry[1], entry[2], entry[3]))
+                Employees[entry[0]] = (Employee(entry[0], entry[1], entry[2], entry[3], self.db))
             # print(entry)
         print('For testing, List of all admins and Employees:')
         print(Admins)
@@ -555,8 +489,8 @@ class AttendanceDatabaseBuilder:
 
 def main():
     databaseBuilder = AttendanceDatabaseBuilder('testAttend.db')
-    conn = sqlite3.connect('testAttend.db')
-    c = conn.cursor()
+    # conn = sqlite3.connect('testAttend.db')
+    # c = conn.cursor()
     databaseBuilder.create_all_tables()
 
     # create_table_person(conn, c)
@@ -570,10 +504,10 @@ def main():
     #     print('No base admin detected!\n Create a new base admin:')
     #     create_base_admin(conn, c)
     # login_menu(conn, c)
-    if databaseBuilder.is_person_empty():
+    if databaseBuilder.does_superadmin_exist():
         print('No base admin detected!\n Create a new base admin:')
         databaseBuilder.create_base_admin()
-    login_menu(databaseBuilder, conn, c)
+    login_menu(databaseBuilder)
 
 
 def test_advance_one_day():
