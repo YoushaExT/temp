@@ -64,3 +64,51 @@ class dbClass:
             for cell in entry:
                 print(cell, end=(13-len(str(cell)))*' ')
             print()
+
+    def create_date_table(self):
+        try:
+            self.c.execute('create table dates'
+                      '(dateID INTEGER PRIMARY KEY AUTOINCREMENT,'
+                      'date DATE);')
+            self.conn.commit()
+        except sqlite3.Error as e:
+            print(e)
+            pass
+
+    def create_presents_table(self):
+        try:
+            self.c.execute('create table presents'
+                      '(id INTEGER PRIMARY KEY AUTOINCREMENT,'
+                      'dateID INTEGER,'
+                      'personID VARCHAR(255))')
+            self.conn.commit()
+        except sqlite3.Error as e:
+            print(e)
+            pass
+
+    def create_leaves_table(self):
+        try:
+            self.c.execute('create table leaves'
+                      '(id INTEGER PRIMARY KEY AUTOINCREMENT,'
+                      'dateID INTEGER,'
+                      'personID VARCHAR(255))')
+            self.conn.commit()
+        except sqlite3.Error as e:
+            print(e)
+            pass
+
+    def create_table_person(self):
+        try:
+            self.c.execute('CREATE TABLE person '
+                      '(id VARCHAR(255) PRIMARY KEY,'
+                      ' name VARCHAR(255),'
+                      ' position VARCHAR(255),'
+                      ' pwd VARCHAR(255),'
+                      ' isAdmin BIT,'
+                      ' isSuperAdmin BIT DEFAULT 0,'
+                      ' lastUpdate VARCHAR(255))')
+
+        except sqlite3.Error as e:
+            print(e)
+            pass
+        self.conn.commit()

@@ -18,8 +18,8 @@ class Person:
         self.db.print_user_info(uid)
         x = input('Enter a new name:\n')
         c.execute('update person set name = ?, lastUpdate=? where id = ?', (x, self.person_id, uid))
-        self.db.print_user_info(uid)
         conn.commit()
+        self.db.print_user_info(uid)
 
     def update_position(self, conn, c, uid):
 
@@ -133,7 +133,7 @@ class Admin(Person):
         if choice == '1':
             self.add_member(conn, c, 0)
         elif choice == '2':
-            self.update_employee(conn, c)
+            self.update_employee(conn, c) #todo
         elif choice == '3':
             self.view_attendance_all(conn, c)
         elif choice == '4':
@@ -181,7 +181,7 @@ class Admin(Person):
         # will show all person except the current admin
 
         if not su:
-            show_table(c, 0)
+            self.db.show_table(0)
             uid = input('Which id to delete? (Press q to skip):\n')
             while not list(c.execute('select * from person where id = ? and isAdmin=0', (uid,))):
                 if uid == 'q':
@@ -189,7 +189,7 @@ class Admin(Person):
                 print(f'No employee account with id: {uid} exists in the table!')
                 uid = input('Which id to delete? (Press q to skip):\n')
         else:
-            show_table(c, 1, self.person_id)
+            self.db.show_table(1, self.person_id)
             uid = input('Which id to delete? (Press q to skip):\n')
             while uid == self.person_id:
                 print('Cannot delete self, Provide another id!')
@@ -204,7 +204,7 @@ class Admin(Person):
         c.execute('delete from presents where personID = ?', (uid,))
         conn.commit()
         # show either employee table or admin table excluding super admin
-        show_table(c, 1) if su else show_table(c, 0, self.person_id)
+        self.db.show_table(1) if su else self.db.show_table(0, self.person_id)
         # also update python dicts to remove the deleted item
         if uid in Admins:
             Admins.pop(uid)
@@ -220,7 +220,7 @@ class Admin(Person):
                            'Press 3 to change password\n'
                            'Press q when done\n')
             return choice
-        show_table(c, 0)  # show only employees
+        self.db.show_table(0)  # show only employees
         uid = input('Which id to update? (Press q to skip):\n')
         while uid not in Employees:
             if uid == 'q':
@@ -240,7 +240,7 @@ class Admin(Person):
                 break
 
         # conn.commit()
-        show_table(c)
+        self.db.show_table()
 
     def view_attendance_all(self, conn, c):
         ds = c.execute('select * from dates')
@@ -449,26 +449,6 @@ def create_base_admin(conn, c):
     conn.commit()
 
 
-# todo
-def show_table(c, option=2, uid=None):
-    # 0 to display employees only, 1 to display admins only, else display all
-    if option in (0, 1):
-        if uid:
-            a = c.execute('select * from person where isAdmin = ? and not id = ?'
-                          , (option, uid))
-        else:
-            a = c.execute('select * from person where isAdmin = ?', (option,))
-    else:
-        if uid:
-            a = c.execute('select * from person where not id = ?', (uid,))
-        else:
-            a = c.execute('select * from person')
-    for e in a:
-        for cell in e:
-            print(cell, end=' ')
-        print()
-
-
 def load(c):
     table = c.execute('select * from person')
     for entry in table:
@@ -541,7 +521,7 @@ def login_menu(conn, c):
         pass
 
 
-class DatabaseBuilder:
+class AttendanceDatabaseBuilder:
     def __init__(self, databaseName):
         # self.conn = sqlite3.connect(databaseName)
         self.db = dbClass(databaseName)
@@ -551,15 +531,27 @@ class DatabaseBuilder:
     def show_table(self, option=2, uid=None):
         self.db.show_table(option, uid)
 
+    def create_all_tables(self):
+        # person
+        self.db.create_table_person()
+        # date
+        self.db.create_date_table()
+        # presents
+        self.db.create_presents_table()
+        # leaves
+        self.db.create_leaves_table()
+        pass
+
 def main():
-    databaseBuilder = DatabaseBuilder('attend5.db')
+    databaseBuilder = AttendanceDatabaseBuilder('attend5.db')
     conn = sqlite3.connect('attend5.db')
     c = conn.cursor()
-    create_table_person(conn, c)
+    databaseBuilder.create_all_tables()
 
-    create_date_table(conn, c)
-    create_presents_table(conn, c)
-    create_leaves_table(conn, c)
+    # create_table_person(conn, c)
+    # create_date_table(conn, c)
+    # create_presents_table(conn, c)
+    # create_leaves_table(conn, c)
 
     print('For testing: Person Table')
     databaseBuilder.show_table()
