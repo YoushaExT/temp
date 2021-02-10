@@ -543,10 +543,13 @@ def login_menu(conn, c):
 
 class DatabaseBuilder:
     def __init__(self, databaseName):
-        self.conn = sqlite3.connect(databaseName)
-    def getConnector(self):
-        return self.conn
+        # self.conn = sqlite3.connect(databaseName)
+        self.db = dbClass(databaseName)
+    # def getConnector(self):
+    #     return self.conn
 
+    def show_table(self, option=2, uid=None):
+        self.db.show_table(option, uid)
 
 def main():
     databaseBuilder = DatabaseBuilder('attend5.db')
@@ -559,7 +562,7 @@ def main():
     create_leaves_table(conn, c)
 
     print('For testing: Person Table')
-    show_table(c)
+    databaseBuilder.show_table()
     if not list(c.execute('select * from person')):
         print('No base admin detected!\n Create a new base admin:')
         create_base_admin(conn, c)

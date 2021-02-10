@@ -35,3 +35,32 @@ class dbClass:
             for cell in entry:
                 print(cell, end=(13-len(str(cell)))*' ')
             print()
+
+    def show_table(self, option=2, uid=None):
+        # 0 to display employees only, 1 to display admins only, else display all
+        if option in (0, 1):
+            if uid:
+                a = self.c.execute('select * from person where isAdmin = ? and not id = ?'
+                              , (option, uid))
+            else:
+                a = self.c.execute('select * from person where isAdmin = ?', (option,))
+        else:
+            if uid:
+                a = self.c.execute('select * from person where not id = ?', (uid,))
+            else:
+                a = self.c.execute('select * from person')
+
+        # First row, column headings
+        columns = ['Login ID', 'Name', 'Designation', 'Password',
+                   'isAdmin', 'isSuperAdmin', 'Updated By']
+
+        # Print first row
+        for col in columns:
+            print(col, end=(13-len(col))*' ')
+        print()
+
+        # Print rest of the table, aligned
+        for entry in a:
+            for cell in entry:
+                print(cell, end=(13-len(str(cell)))*' ')
+            print()
