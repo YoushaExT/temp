@@ -112,3 +112,8 @@ class dbClass:
             print(e)
             pass
         self.conn.commit()
+
+    def is_person_empty(self):
+        if list(self.c.execute('select * from person')):
+            return False
+        return True

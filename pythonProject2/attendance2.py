@@ -542,6 +542,9 @@ class AttendanceDatabaseBuilder:
         self.db.create_leaves_table()
         pass
 
+    def is_person_empty(self):
+        return self.db.is_person_empty()
+
 def main():
     databaseBuilder = AttendanceDatabaseBuilder('attend5.db')
     conn = sqlite3.connect('attend5.db')
@@ -555,7 +558,11 @@ def main():
 
     print('For testing: Person Table')
     databaseBuilder.show_table()
-    if not list(c.execute('select * from person')):
+    # if not list(c.execute('select * from person')):
+    #     print('No base admin detected!\n Create a new base admin:')
+    #     create_base_admin(conn, c)
+    # login_menu(conn, c)
+    if databaseBuilder.is_person_empty():
         print('No base admin detected!\n Create a new base admin:')
         create_base_admin(conn, c)
     login_menu(conn, c)
