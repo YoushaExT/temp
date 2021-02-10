@@ -11,7 +11,7 @@ TODAY = datetime.datetime.now().date()
 class Person:
     def __init__(self, person_id, name, position, pwd):
         self.name, self.position, self.person_id, self.pwd = name, position, person_id, pwd
-        self.db = dbClass('attend5.db')
+        self.db = dbClass('testAttend.db')
 
     def update_name(self, conn, c, uid):
 
@@ -435,20 +435,6 @@ def create_table_person(conn, c):
     conn.commit()
 
 
-def create_base_admin(conn, c):
-    uid = input('Set login id of the admin:\n')
-    while list(c.execute('select * from person where id = ?', (uid,))):
-        print(f'User ID:{uid} already exists, provide a unique ID!')
-        uid = input('Set login id of the admin:\n')
-    pwd = input('Set password of the admin:\n')
-    name = input('Set name:\n')
-    position = input('Set position:\n')
-    c.execute('insert into person (id, name, position, pwd, isAdmin, lastUpdate, isSuperAdmin) '
-              'values (?, ?, ?, ?, 1, ?, 1)',
-              (uid, name, position, pwd, uid))
-    conn.commit()
-
-
 def load(c):
     table = c.execute('select * from person')
     for entry in table:
@@ -545,9 +531,13 @@ class AttendanceDatabaseBuilder:
     def is_person_empty(self):
         return self.db.is_person_empty()
 
+    def create_base_admin(self):
+        self.db.create_base_admin()
+
+
 def main():
-    databaseBuilder = AttendanceDatabaseBuilder('attend5.db')
-    conn = sqlite3.connect('attend5.db')
+    databaseBuilder = AttendanceDatabaseBuilder('testAttend.db')
+    conn = sqlite3.connect('testAttend.db')
     c = conn.cursor()
     databaseBuilder.create_all_tables()
 
@@ -564,7 +554,7 @@ def main():
     # login_menu(conn, c)
     if databaseBuilder.is_person_empty():
         print('No base admin detected!\n Create a new base admin:')
-        create_base_admin(conn, c)
+        databaseBuilder.create_base_admin()
     login_menu(conn, c)
 
 

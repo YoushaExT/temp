@@ -72,7 +72,7 @@ class dbClass:
                       'date DATE);')
             self.conn.commit()
         except sqlite3.Error as e:
-            print(e)
+            # print(e)
             pass
 
     def create_presents_table(self):
@@ -83,7 +83,7 @@ class dbClass:
                       'personID VARCHAR(255))')
             self.conn.commit()
         except sqlite3.Error as e:
-            print(e)
+            # print(e)
             pass
 
     def create_leaves_table(self):
@@ -94,7 +94,7 @@ class dbClass:
                       'personID VARCHAR(255))')
             self.conn.commit()
         except sqlite3.Error as e:
-            print(e)
+            # print(e)
             pass
 
     def create_table_person(self):
@@ -109,7 +109,7 @@ class dbClass:
                       ' lastUpdate VARCHAR(255))')
 
         except sqlite3.Error as e:
-            print(e)
+            # print(e)
             pass
         self.conn.commit()
 
@@ -117,3 +117,16 @@ class dbClass:
         if list(self.c.execute('select * from person')):
             return False
         return True
+
+    def create_base_admin(self):
+        uid = input('Set login id of the admin:\n')
+        while list(self.c.execute('select * from person where id = ?', (uid,))):
+            print(f'User ID:{uid} already exists, provide a unique ID!')
+            uid = input('Set login id of the admin:\n')
+        pwd = input('Set password of the admin:\n')
+        name = input('Set name:\n')
+        position = input('Set position:\n')
+        self.c.execute('insert into person (id, name, position, pwd, isAdmin, lastUpdate, isSuperAdmin) '
+                  'values (?, ?, ?, ?, 1, ?, 1)',
+                  (uid, name, position, pwd, uid))
+        self.conn.commit()
