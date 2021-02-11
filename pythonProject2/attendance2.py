@@ -46,18 +46,20 @@ class Person:
 
     def update_self(self):
         print('Update menu:')
-        def choicePrompt():
-            choice = input('Press 1 to change name\n'
-                           'Press 2 to change position\n'
-                           'Press 3 to change password\n'
-                           'Press 4 to view your profile info\n'
-                           'Press q when done\n')
-            return choice
+
+        def choice_prompt():
+            ch = input('Press 1 to change name\n'
+                       'Press 2 to change position\n'
+                       'Press 3 to change password\n'
+                       'Press 4 to view your profile info\n'
+                       'Press q when done\n')
+            return ch
+
         self.show_self()  # second argument is filter, if false will also display password
         uid = self.person_id
 
         while True:
-            choice = choicePrompt()
+            choice = choice_prompt()
             if choice == '1':
                 self.update_name(uid)
             elif choice == '2':
@@ -69,8 +71,8 @@ class Person:
 
         self.show_self()
 
-    def show_self(self, filter=True):
-        self.db.print_user_info(self.person_id, filter)
+    def show_self(self, my_filter=True):
+        self.db.print_user_info(self.person_id, my_filter)
 
 
 class Admin(Person):
@@ -122,7 +124,6 @@ class Admin(Person):
             return False
         return True  # True to keep asking, False to exit
 
-
     def add_member(self, admin):
         uid = input('Set login:\n')
         while self.db.does_person_exist(uid):
@@ -139,7 +140,7 @@ class Admin(Person):
         elif admin == 0:
             Employees[uid] = Employee(uid, name, position, pwd, self.db)
 
-    def delete_member(self, su = False):
+    def delete_member(self, su=False):
         # will show all admins except the current admin
 
         if not su:
@@ -182,12 +183,14 @@ class Admin(Person):
 
     def update_employee(self):
         print('Update menu:')
-        def choicePrompt():
-            choice = input('Press 1 to change name\n'
-                           'Press 2 to change position\n'
-                           'Press 3 to change password\n'
-                           'Press q when done\n')
-            return choice
+
+        def choice_prompt():
+            ch = input('Press 1 to change name\n'
+                       'Press 2 to change position\n'
+                       'Press 3 to change password\n'
+                       'Press q when done\n')
+            return ch
+
         self.db.show_table(0)  # show only employees
         uid = input('Which id to update? (Press q to skip):\n')
         while uid not in Employees:
@@ -197,7 +200,7 @@ class Admin(Person):
             uid = input('Which id to update? (Press q to skip):\n')
 
         while True:
-            choice = choicePrompt()
+            choice = choice_prompt()
             if choice == '1':
                 self.update_name(uid)
             elif choice == '2':
@@ -229,21 +232,20 @@ class Admin(Person):
                 did = d[0]
                 # print present/absent/leave, aligned
                 if self.db.check_present(did, person):
-                    print('Present', end=4*' ')
+                    print('Present', end=4 * ' ')
                 elif self.db.check_leave(did, person):
-                    print('Leave', end=6*' ')
+                    print('Leave', end=6 * ' ')
                 else:
-                    print('Absent', end=5*' ')
+                    print('Absent', end=5 * ' ')
             print()
 
-    def show_all(self, filter=True):
-        self.db.print_user_info(filter=filter)
+    def show_all(self, my_filter=True):
+        self.db.print_user_info(filter=my_filter)
 
 
 class Employee(Person):
     def __init__(self, person_id, name, position, pwd, db):
         super().__init__(person_id, name, position, pwd, db)
-
 
     def menu(self):
         did = self.db.get_date_id(TODAY)
@@ -298,20 +300,19 @@ class Employee(Person):
             did = d[0]
             # if a present is marked for this date
             if self.db.check_present(did, person):
-                print('Present', end=4*' ')
+                print('Present', end=4 * ' ')
             # if a leave is marked for this date
             elif self.db.check_leave(did, person):
-                print('Leave', end=6*' ')
+                print('Leave', end=6 * ' ')
             # if not marked for this date
             else:
-                print('Absent', end=5*' ')
+                print('Absent', end=5 * ' ')
         print()
 
 
 class SuperAdmin(Admin):
     def __init__(self, person_id, name, position, pwd, db):
         super().__init__(person_id, name, position, pwd, db)
-
 
     def menu(self):
         did = self.db.get_date_id(TODAY)
@@ -378,7 +379,6 @@ def login():
 
 
 def login_menu(database_builder):
-
     database_builder.load()
     while True:
         lg = login()
@@ -394,8 +394,8 @@ def login_menu(database_builder):
 
 
 class AttendanceDatabaseBuilder:
-    def __init__(self, databaseName):
-        self.db = dbClass(databaseName)
+    def __init__(self, database_name):
+        self.db = dbClass(database_name)
         self.load()
 
     def show_table(self, option=2, uid=None):
@@ -412,7 +412,7 @@ class AttendanceDatabaseBuilder:
         self.db.create_leaves_table()
         pass
 
-    def does_superadmin_exist(self):
+    def does_super_admin_exist(self):
         return self.db.does_superadmin_exist()
 
     def create_base_admin(self):
@@ -444,7 +444,7 @@ def main():
     print('For testing: Person Table')
     database_builder.show_table()
 
-    if database_builder.does_superadmin_exist():
+    if database_builder.does_super_admin_exist():
         print('No base admin detected!\n Create a new base admin:')
         database_builder.create_base_admin()
     login_menu(database_builder)
