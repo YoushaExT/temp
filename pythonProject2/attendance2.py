@@ -1,6 +1,5 @@
-# import sqlite3
 import datetime
-from attendanceDatabaseClass import dbClass
+from attendanceDatabaseClass import DbClass
 
 SuperAdmins = {}
 Admins = {}
@@ -240,7 +239,7 @@ class Admin(Person):
             print()
 
     def show_all(self, my_filter=True):
-        self.db.print_user_info(filter=my_filter)
+        self.db.print_user_info(my_filter=my_filter)
 
 
 class Employee(Person):
@@ -395,7 +394,7 @@ def login_menu(database_builder):
 
 class AttendanceDatabaseBuilder:
     def __init__(self, database_name):
-        self.db = dbClass(database_name)
+        self.db = DbClass(database_name)
         self.load()
 
     def show_table(self, option=2, uid=None):
@@ -413,7 +412,7 @@ class AttendanceDatabaseBuilder:
         pass
 
     def does_super_admin_exist(self):
-        return self.db.does_superadmin_exist()
+        return self.db.does_super_admin_exist()
 
     def create_base_admin(self):
         self.db.create_base_admin()
@@ -450,19 +449,18 @@ def main():
     login_menu(database_builder)
 
 
-def test_advance_one_day():
+def test_advance_days(days=1):
     global TODAY
-    TODAY += datetime.timedelta(days=1)
+    TODAY += datetime.timedelta(days=days)
 
 
 # for testing - to change today's date
-def test_retreat_one_day():
+def test_retreat_days(days=1):
     global TODAY
-    TODAY -= datetime.timedelta(days=1)
+    TODAY -= datetime.timedelta(days=days)
 
 
 if __name__ == '__main__':
-    # view_all()
-    # test_advance_one_day()
-    # test_retreat_one_day()
+    # test_advance_days()
+    # test_retreat_days()
     main()
