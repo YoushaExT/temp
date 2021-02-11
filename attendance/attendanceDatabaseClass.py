@@ -35,13 +35,22 @@ class DbClass:
                 print(cell, end=(13 - len(str(cell))) * ' ')
             print()
 
-    def show_table(self, option=2, uid=None):
+    def show_table(self, option=2, uid=None, filter2=False):
         # 0 to display employees only, 1 to display admins only, else display all
+        print(option)
         if option in (0, 1):
-            if uid:
+            if uid and not filter2:
                 a = self.c.execute('select * from person where isAdmin = ? and not id = ?', (option, uid))
-            else:
+            elif not uid and not filter2:
                 a = self.c.execute('select * from person where isAdmin = ?', (option,))
+            elif not uid and filter2:
+                a = self.c.execute('select id, name, position, lastUpdate from person'
+                                   ' where isAdmin = ?', (option,))
+            # uid and filter
+            else:
+                a = self.c.execute('select id, name, position, lastUpdate from person'
+                                   ' where isAdmin = ? and not id = ?', (option, uid))
+            # filter not supported for viewing every1
         else:
             if uid:
                 a = self.c.execute('select * from person where not id = ?', (uid,))
@@ -49,8 +58,10 @@ class DbClass:
                 a = self.c.execute('select * from person')
 
         # First row, column headings
-        columns = ['Login ID', 'Name', 'Designation', 'Password',
-                   'isAdmin', 'isSuperAdmin', 'Updated By']
+        columns = ['Login ID', 'Name', 'Designation']
+        if not filter2:
+            columns += ['Password', 'isAdmin', 'isSuperAdmin']
+        columns.append('Updated by')
 
         # Print first row
         for col in columns:

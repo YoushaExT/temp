@@ -143,7 +143,7 @@ class Admin(Person):
         # will show all admins except the current admin
 
         if not su:
-            self.db.show_table(0)
+            self.db.show_table(0, filter2=True)
             uid = input('Which id to delete? (Press q to skip):\n')
             while not self.db.does_person_exist(uid):
                 if uid == 'q':
@@ -152,7 +152,7 @@ class Admin(Person):
                 print(f'No employee account with id: {uid} exists in the table!')
                 uid = input('Which id to delete? (Press q to skip):\n')
         else:
-            self.db.show_table(1, self.person_id)
+            self.db.show_table(1, self.person_id, True)
             uid = input('Which id to delete? (Press q to skip):\n')
 
             while uid == self.person_id:
@@ -172,7 +172,7 @@ class Admin(Person):
         self.db.delete_person(uid)
 
         # show either employee table or admin table excluding super admin
-        self.db.show_table(1, self.person_id) if su else self.db.show_table(0)
+        self.db.show_table(1, self.person_id, True) if su else self.db.show_table(0, filter2=True)
 
         # also update python dicts to remove the deleted item
         if uid in Admins:
@@ -190,7 +190,7 @@ class Admin(Person):
                        'Press q when done\n')
             return ch
 
-        self.db.show_table(0)  # show only employees
+        self.db.show_table(0, filter2=True)  # show only employees
         uid = input('Which id to update? (Press q to skip):\n')
         while uid not in Employees:
             if uid == 'q':
@@ -209,7 +209,7 @@ class Admin(Person):
             elif choice == 'q':
                 break
 
-        self.db.show_table()
+        self.db.show_table(0, filter2=True)
 
     def view_attendance_all(self):
 
@@ -397,8 +397,8 @@ class AttendanceDatabaseBuilder:
         self.db = DbClass(database_name)
         self.load()
 
-    def show_table(self, option=2, uid=None):
-        self.db.show_table(option, uid)
+    def show_table(self, option=2, uid=None, filter2=False):
+        self.db.show_table(option, uid, filter2)
 
     def create_all_tables(self):
         # person
