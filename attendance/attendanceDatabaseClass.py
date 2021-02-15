@@ -37,7 +37,7 @@ class DbClass:
 
     def show_table(self, option=2, uid=None, filter2=False):
         # 0 to display employees only, 1 to display admins only, else display all
-        print(option)
+
         if option in (0, 1):
             if uid and not filter2:
                 a = self.c.execute('select * from person where isAdmin = ? and not id = ?', (option, uid))

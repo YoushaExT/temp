@@ -217,7 +217,7 @@ class Admin(Person):
 
         # First 2 rows
         print('ATTENDANCE RECORDS:')
-        print('Date: \t\t', end='')
+        print('Date:', end=8*' ')
         for d in ds:
             print(d[1], end=' ')
         print()
@@ -226,7 +226,8 @@ class Admin(Person):
         # for each person -> for each date
         for p in ps:
             person = p[0]
-            print(person, end='\t\t')
+            # print(person, end='\t\t')  #todo
+            print(person, end=(13 - len(person)) * ' ')
             for d in ds:
                 did = d[0]
                 # print present/absent/leave, aligned
@@ -395,6 +396,8 @@ def login_menu(database_builder):
 class AttendanceDatabaseBuilder:
     def __init__(self, database_name):
         self.db = DbClass(database_name)
+        # todo
+        self.create_all_tables()
         self.load()
 
     def show_table(self, option=2, uid=None, filter2=False):
@@ -438,8 +441,9 @@ class AttendanceDatabaseBuilder:
 
 def main():
     # database name here
-    database_builder = AttendanceDatabaseBuilder('testAttend.db')
-    database_builder.create_all_tables()
+    # database_builder = AttendanceDatabaseBuilder('testAttend.db')
+    database_builder = AttendanceDatabaseBuilder('test.db')
+    # database_builder.create_all_tables()  # todo
 
     print('For testing: Person Table')
     database_builder.show_table()

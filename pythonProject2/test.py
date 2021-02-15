@@ -1,7 +1,7 @@
 import sqlite3
 
 def main():
-    conn = sqlite3.connect('students3.db')  # a db is created
+    conn = sqlite3.connect('testForeign.db')  # a db is created
     c = conn.cursor()
     # cursor can execute sql queries
     # createTable(c)
@@ -36,10 +36,12 @@ def createTable(c):
         c.execute('CREATE TABLE students '
                   '(id INTEGER PRIMARY KEY AUTOINCREMENT,'
                   ' first VARCHAR(255),'
-                  ' middle VARCHAR(255),'
-                  ' last VARCHAR(255),'
                   ' house VARCHAR(10),'
                   ' birth INTEGER)')
+
+        c.execute('CREATE TABLE orders'
+                  '(orderID INTEGER PRIMARY KEY AUTOINCREMENT'
+                  'studentID INTEGER FOREIGN KEY REFERENCES students (id) ON DELETE CASCADE')
 
     except sqlite3.Error as e:
         print(e)
